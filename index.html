@@ -186,6 +186,53 @@
   .tabela td{text-align:right;padding:7px 6px;border-bottom:1px solid var(--linha);font-variant-numeric:tabular-nums}
   .tabela th:first-child,.tabela td:first-child{text-align:left;font-weight:600}
   .tabela tr.tot td{font-weight:700;border-bottom:0}
+
+  /* ===== Etapa 4: camadas e avisos ===== */
+  .cartao-camadas{position:fixed;left:12px;top:126px;z-index:998;width:280px;background:var(--cartao);border-radius:var(--raio);box-shadow:var(--sombra);overflow:hidden;max-height:calc(100vh - 220px);overflow-y:auto}
+  .cartao-camadas:empty{display:none}
+  .cc-cab{width:100%;border:0;background:none;display:flex;align-items:center;gap:8px;padding:12px 14px;font-size:14.5px;text-align:left}
+  .cc-cab span{margin-left:auto;color:var(--texto-2)}
+  .cc-corpo{padding:0 14px 12px}
+  .cc-corpo.oculto{display:none}
+  .cc-opcoes{display:flex;flex-wrap:wrap;gap:6px}
+  .cc-opcoes button{border:1px solid var(--linha);background:var(--cartao);border-radius:999px;padding:6px 11px;font-size:13px;font-weight:600;color:var(--texto)}
+  .cc-opcoes button.ativa{background:var(--azul);border-color:var(--azul);color:#fff}
+  .cc-opcoes button[disabled]{opacity:.4;cursor:not-allowed}
+  .cc-avisos{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px;font-weight:600;cursor:pointer}
+  .cc-avisos input{width:18px;height:18px;accent-color:var(--azul)}
+  .cc-dias{display:flex;gap:6px;margin-top:8px}
+  .cc-dias button{flex:1;border:1px solid var(--linha);background:var(--cartao);border-radius:10px;padding:6px;font-size:12.5px;font-weight:600}
+  .cc-dias button.ativa{background:var(--azul-claro);border-color:var(--azul);color:var(--azul-escuro)}
+  .cc-lista{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+  .cc-lista button{border:0;background:var(--fundo);border-radius:10px;padding:8px 10px;display:flex;gap:8px;align-items:flex-start;text-align:left;font-size:13px}
+  .cc-lista button i{width:12px;height:12px;border-radius:3px;flex:0 0 12px;margin-top:3px;border:1px solid rgba(0,0,0,.2)}
+  .cc-lista small{display:block;color:var(--texto-2);font-size:11.5px;margin-top:2px}
+  .cc-vazio{font-size:13px;color:var(--texto-2);margin:6px 0 0}
+  .leg{border-top:1px solid var(--linha);padding:10px 14px 12px}
+  .leg-tit{font-size:12.5px;font-weight:700;margin-bottom:6px}
+  .leg-grad{height:12px;border-radius:6px;border:1px solid var(--linha)}
+  .leg-ticks{display:flex;justify-content:space-between;font-size:10.5px;color:var(--texto-2);margin-top:3px}
+  .leg-cat{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12px}
+  .leg-cat span{display:flex;align-items:center;gap:5px}
+  .leg-cat i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .leg-ponto{font-size:13px;margin-top:8px;color:var(--texto-2)}
+  .leg-ponto b{color:var(--texto)}
+  .leg-atual{font-size:11px;color:var(--texto-2);margin-top:4px}
+  .aviso-mun{border-radius:14px;padding:12px 14px;margin-bottom:12px;background:color-mix(in srgb,var(--cor-aviso) 22%,#fff);border:2px solid var(--cor-aviso)}
+  .aviso-mun summary{display:flex;gap:10px;align-items:center;cursor:pointer;list-style:none}
+  .aviso-mun summary::-webkit-details-marker{display:none}
+  .aviso-mun summary::after{content:"▾";margin-left:auto;color:var(--texto-2)}
+  .aviso-mun[open] summary::after{content:"▴"}
+  .aviso-mun .av-ic{font-size:26px}
+  .aviso-mun b{display:block;font-size:15px}
+  .aviso-mun small{display:block;font-size:12.5px;color:var(--texto-2);margin-top:2px}
+  .aviso-mun p,.aviso-mun ul{font-size:13.5px;line-height:1.5;margin:10px 0 0}
+  .aviso-mun ul{padding-left:18px}
+  .aviso-mun .av-fonte{font-size:11.5px;color:var(--texto-2)}
+  @media (max-width:820px){
+    .cartao-camadas{top:184px;width:auto;max-width:calc(100% - 24px)}
+    body.com-painel .cartao-camadas{display:none}
+  }
   .rodape{position:fixed;left:12px;bottom:8px;z-index:998;font-size:11px;color:var(--texto-2);background:rgba(255,255,255,.85);padding:4px 8px;border-radius:8px;max-width:calc(100% - 200px)}
   .rodape a{color:var(--azul-escuro)}
   .leaflet-control-attribution{font-size:10px}
@@ -235,6 +282,7 @@
 </header>
 
 <nav class="trilha" id="trilha"></nav>
+<div class="cartao-camadas" id="cartaoCamadas"></div>
 
 <div class="acoes">
   <div class="camadas" id="camadas" aria-label="Tipo de mapa">
@@ -304,6 +352,8 @@ const mapa = L.map("mapa", {
   maxBounds: [[-40, -90], [10, -25]], maxBoundsViscosity: .8
 }).setView([-14.5, -52], 4);
 L.control.zoom({ position: "bottomleft" }).addTo(mapa);
+mapa.createPane("clima").style.zIndex = 350;
+const paneAvisos = mapa.createPane("avisos"); paneAvisos.style.zIndex = 390; paneAvisos.style.pointerEvents = "none";
 
 const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
 const bases = {
@@ -339,9 +389,9 @@ let camadaUF = null;
 function estiloUF(f) {
   const aberta = estado.ufAberta === f.properties.uf;
   return {
-    color: naSatelite() ? "#ffffff" : "#ffffff", weight: aberta ? 2.5 : 1.4,
+    color: estado.camada ? "#3d4b57" : "#ffffff", weight: aberta ? 2.5 : (estado.camada ? 1 : 1.4),
     fillColor: corRegiao[f.properties.regiao] || "#0b6fa4",
-    fillOpacity: aberta ? 0 : (naSatelite() ? .12 : .28)
+    fillOpacity: (aberta || estado.camada) ? 0 : (naSatelite() ? .12 : .28)
   };
 }
 function restilizar() {
@@ -429,6 +479,7 @@ async function selecionar(linha, { voar = true, ponto = null } = {}) {
   const [id, nome, uf, lat, lon] = linha;
   estado.selecionado = linha;
   history.replaceState(null, "", `#m=${id}`);
+  if (estado.cartaoAberto) { estado.cartaoAberto = false; desenharCartaoCamadas(); }
   abrirPainel(linha);
   await abrirUF(uf, { voar: false });
   restilizar(); atualizarTrilha();
@@ -540,7 +591,7 @@ function desenharAgora(linha, d) {
   const dir = direcao(c.wind_direction_10m);
   const hora = c.time.slice(11, 16);
   const nascer = dd.sunrise[0].slice(11, 16), por = dd.sunset[0].slice(11, 16);
-  $("pCorpo").innerHTML = `
+  $("pCorpo").innerHTML = htmlAvisosMunicipio(linha[0]) + `
     <div class="agora ${c.is_day ? "" : "noite"}">
       <div class="rot">Agora · ${hora}</div>
       <div class="linha1"><div class="temp">${fmt(c.temperature_2m)}°</div><div class="icone">${t.icone}</div></div>
@@ -985,7 +1036,8 @@ function montarFala(linha, d) {
   estado.textoFala = `${linha[1]}, ${estado.estados[linha[2]]?.nome || linha[2]}. Agora: ${fmt(c.temperature_2m)} graus, ${t.texto}. ` +
     `Hoje, máxima de ${fmt(dd.temperature_2m_max[0])} e mínima de ${fmt(dd.temperature_2m_min[0])} graus, chance de chuva de ${dd.precipitation_probability_max[0] ?? 0} por cento. ` +
     `Umidade do ar ${fmt(c.relative_humidity_2m)} por cento. Vento de ${fmt(c.wind_speed_10m)} quilômetros por hora, vindo do ${DIRS[dir]}. ` +
-    `Amanhã: ${ta.texto}, de ${fmt(dd.temperature_2m_min[1])} a ${fmt(dd.temperature_2m_max[1])} graus, chance de chuva de ${dd.precipitation_probability_max[1] ?? 0} por cento.`;
+    `Amanhã: ${ta.texto}, de ${fmt(dd.temperature_2m_min[1])} a ${fmt(dd.temperature_2m_max[1])} graus, chance de chuva de ${dd.precipitation_probability_max[1] ?? 0} por cento.` +
+    avisosDoMunicipio(linha[0]).map(a => ` Atenção: aviso do INMET de ${a.evento}, grau ${a.severidade}.`).join("");
 }
 
 /* =========================================================
@@ -1203,6 +1255,185 @@ function avisar(msg) { const a = $("aviso"); a.textContent = msg; a.style.displa
 $("aviso").addEventListener("click", () => $("aviso").style.display = "none");
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(tToast); tToast = setTimeout(() => t.classList.remove("on"), 1800); }
 
+/* =========================================================
+   ETAPA 4 — Camadas coloridas do mapa + avisos do INMET
+   O robô calcula uma grade de pontos (1° ≈ 110 km) todo dia;
+   aqui o navegador suaviza a grade e pinta só dentro do Brasil.
+   ========================================================= */
+const CAMADAS = {
+  chuva7:   { nome: "Chuva nos últimos 7 dias", curto: "Chuva 7 dias", un: "mm", stops: [0, 5, 15, 30, 60, 100, 160],
+              cores: ["#f4f9fd", "#d3e6f5", "#9ecae1", "#5ea8d6", "#2b7bba", "#105ba4", "#08306b"] },
+  chuva30:  { nome: "Chuva nos últimos 30 dias", curto: "Chuva 30 dias", un: "mm", stops: [0, 25, 50, 100, 150, 250, 350],
+              cores: ["#f4f9fd", "#d3e6f5", "#9ecae1", "#5ea8d6", "#2b7bba", "#105ba4", "#08306b"] },
+  prev7:    { nome: "Chuva prevista, próximos 7 dias", curto: "Previsão 7 dias", un: "mm", stops: [0, 5, 15, 30, 60, 100, 160],
+              cores: ["#f6f9f4", "#d6ecd2", "#a8dbb0", "#6cc1a0", "#33a199", "#167a8c", "#0b4f6c"] },
+  tmax:     { nome: "Temperatura máxima prevista hoje", curto: "Temperatura máx.", un: "°C", stops: [15, 20, 25, 30, 33, 36, 40],
+              cores: ["#fff7d9", "#fee6a6", "#fdc671", "#fb9a4b", "#ef6a32", "#cf3a20", "#8b1a10"] },
+  urmin:    { nome: "Umidade do ar mínima prevista hoje", curto: "Umidade mínima", un: "%", stops: [15, 20, 30, 40, 60, 80, 100],
+              cores: ["#7a2e05", "#b4500e", "#e07b2a", "#f6b26b", "#fde2bf", "#f3f6f4", "#ffffff"] },
+  semchuva: { nome: "Dias seguidos sem chuva", curto: "Dias sem chuva", un: "dias", stops: [0, 3, 7, 15, 30, 45, 60],
+              cores: ["#fdf8ee", "#fbe8c3", "#f6cc8a", "#e9a453", "#cf7a2c", "#a2531a", "#66320d"] },
+  fogo:     { nome: "Risco de fogo (índice simplificado)", curto: "Risco de fogo", un: "", categorias: true,
+              rotulos: ["Baixo", "Moderado", "Alto", "Muito alto", "Crítico"],
+              cores: ["#2f9e5b", "#e6c229", "#f18a3c", "#dc3c3d", "#7e1416"] }
+};
+
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+function corEscala(def, v) {
+  if (v == null || isNaN(v)) return null;
+  if (def.categorias) return hex2rgb(def.cores[Math.max(0, Math.min(4, Math.round(v)))]);
+  const s = def.stops, c = def.cores;
+  if (v <= s[0]) return hex2rgb(c[0]);
+  for (let k = 1; k < s.length; k++) {
+    if (v <= s[k]) {
+      const t = (v - s[k - 1]) / (s[k] - s[k - 1]), a = hex2rgb(c[k - 1]), b = hex2rgb(c[k]);
+      return a.map((x, i) => Math.round(x + (b[i] - x) * t));
+    }
+  }
+  return hex2rgb(c[c.length - 1]);
+}
+
+/* valor suavizado num ponto (interpolação bilinear da grade, ignorando buracos) */
+function valorGrade(campo, lat, lon) {
+  const G = estado.grade; if (!G) return null;
+  const v = G.campos[campo]; if (!v) return null;
+  const gi = (lat - G.lat0) / G.passo - .5, gj = (lon - G.lon0) / G.passo - .5;
+  const i0 = Math.floor(gi), j0 = Math.floor(gj), fi = gi - i0, fj = gj - j0;
+  let soma = 0, peso = 0;
+  for (const [di, dj, w] of [[0, 0, (1 - fi) * (1 - fj)], [1, 0, fi * (1 - fj)], [0, 1, (1 - fi) * fj], [1, 1, fi * fj]]) {
+    const i = i0 + di, j = j0 + dj;
+    if (i < 0 || j < 0 || i >= G.nlat || j >= G.nlon) continue;
+    const x = v[i * G.nlon + j];
+    if (x != null && w > 0) { soma += x * w; peso += w; }
+  }
+  return peso > .05 ? soma / peso : null;
+}
+
+const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
+const desmerc = y => (2 * Math.atan(Math.exp(y)) - Math.PI / 2) * 180 / Math.PI;
+let imagemCamada = null;
+
+function pintarCamada(campo) {
+  if (imagemCamada) { mapa.removeLayer(imagemCamada); imagemCamada = null; }
+  estado.camada = campo;
+  restilizar(); desenharCartaoCamadas();
+  if (!campo || !estado.grade) return;
+  const def = CAMADAS[campo];
+  const N = 6.5, S = -34, O = -74.5, L_ = -34;
+  const W = 900, yN = merc(N), yS = merc(S), H = Math.round(W * (yN - yS) / ((L_ - O) * Math.PI / 180));
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  const img = ctx.createImageData(W, H), px = img.data;
+  for (let y = 0; y < H; y++) {
+    const lat = desmerc(yN - (y + .5) / H * (yN - yS));
+    for (let x = 0; x < W; x++) {
+      const lon = O + (x + .5) / W * (L_ - O);
+      const c = corEscala(def, valorGrade(campo, lat, lon));
+      if (!c) continue;
+      const k = (y * W + x) * 4; px[k] = c[0]; px[k + 1] = c[1]; px[k + 2] = c[2]; px[k + 3] = 255;
+    }
+  }
+  // recorta no contorno do Brasil
+  const cv2 = document.createElement("canvas"); cv2.width = W; cv2.height = H;
+  const c2 = cv2.getContext("2d");
+  const proj = ([lon, lat]) => [(lon - O) / (L_ - O) * W, (yN - merc(lat)) / (yN - yS) * H];
+  c2.beginPath();
+  camadaUF.eachLayer(l => {
+    const g = l.feature.geometry, polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+    polys.forEach(p => p.forEach(anel => anel.forEach((pt, i) => { const [a, b] = proj(pt); i ? c2.lineTo(a, b) : c2.moveTo(a, b); })));
+  });
+  c2.fillStyle = "#000"; c2.fill("evenodd");
+  ctx.putImageData(img, 0, 0);
+  c2.globalCompositeOperation = "source-in";
+  c2.drawImage(cv, 0, 0);
+  imagemCamada = L.imageOverlay(cv2.toDataURL("image/png"), [[S, O], [N, L_]], { opacity: .82, pane: "clima", interactive: false }).addTo(mapa);
+}
+
+/* ---------- Avisos do INMET ---------- */
+let camadaAvisos = null;
+function desenharAvisosMapa() {
+  if (camadaAvisos) { mapa.removeLayer(camadaAvisos); camadaAvisos = null; }
+  if (!estado.mostrarAvisos || !estado.avisos?.avisos?.length) return;
+  const feats = estado.avisos.avisos.filter(a => a.poligono && a.quando === estado.diaAvisos)
+    .sort((a, b) => a.nivel - b.nivel)
+    .map(a => ({ type: "Feature", properties: a, geometry: a.poligono }));
+  camadaAvisos = L.geoJSON({ type: "FeatureCollection", features: feats }, {
+    pane: "avisos", interactive: false,
+    style: f => ({ color: f.properties.cor, weight: 2.5, fillColor: f.properties.cor, fillOpacity: .28, dashArray: f.properties.nivel === 1 ? "6 4" : null })
+  }).addTo(mapa);
+}
+function avisosDoMunicipio(id) {
+  return (estado.avisos?.avisos || []).filter(a => a.geocodes.includes(id));
+}
+const fDataHora = s => s ? `${s.slice(8, 10)}/${s.slice(5, 7)} às ${s.slice(11, 16)}` : "";
+const ICONE_AVISO = ev => /chuva|tempest/i.test(ev) ? "⛈️" : /umidade/i.test(ev) ? "🏜️" : /vento|vendaval/i.test(ev) ? "🌪️" : /calor|quente/i.test(ev) ? "🔥" : /frio|geada/i.test(ev) ? "🥶" : "⚠️";
+function htmlAvisosMunicipio(id) {
+  const lst = avisosDoMunicipio(id);
+  if (!lst.length) return "";
+  return lst.map(a => `
+    <details class="aviso-mun nivel${a.nivel}" style="--cor-aviso:${esc(a.cor)}">
+      <summary><span class="av-ic">${ICONE_AVISO(a.evento)}</span><span><b>Aviso de ${esc(a.evento)}</b><small>${esc(a.severidade)} · de ${fDataHora(a.inicio)} até ${fDataHora(a.fim)}</small></span></summary>
+      ${a.riscos.length ? `<p><b>O que pode acontecer:</b> ${a.riscos.map(esc).join(" ")}</p>` : ""}
+      ${a.instrucoes.length ? `<p><b>O que fazer:</b></p><ul>${a.instrucoes.map(i => `<li>${esc(i)}</li>`).join("")}</ul>` : ""}
+      <p class="av-fonte">Fonte: INMET (aviso oficial)</p>
+    </details>`).join("");
+}
+
+/* ---------- Cartão de camadas ---------- */
+estado.camada = null; estado.mostrarAvisos = true; estado.diaAvisos = "hoje";
+function desenharCartaoCamadas() {
+  const c = $("cartaoCamadas"); if (!c) return;
+  const def = estado.camada ? CAMADAS[estado.camada] : null;
+  const av = estado.avisos?.avisos || [];
+  const nHoje = av.filter(a => a.quando === "hoje").length, nFut = av.filter(a => a.quando === "futuro").length;
+  let legenda = "";
+  if (def) {
+    legenda = def.categorias
+      ? `<div class="leg-cat">${def.rotulos.map((r, i) => `<span><i style="background:${def.cores[i]}"></i>${r}</span>`).join("")}</div>`
+      : `<div class="leg-grad" style="background:linear-gradient(90deg,${def.cores.join(",")})"></div>
+         <div class="leg-ticks">${def.stops.map(s => `<span>${s}</span>`).join("")}</div>`;
+    legenda = `<div class="leg"><div class="leg-tit">${def.nome}${def.un && !def.categorias ? ` (${def.un})` : ""}</div>${legenda}
+      <div class="leg-ponto" id="legPonto">Passe o mouse ou toque no mapa para ver o valor</div>
+      <div class="leg-atual">Atualizado em ${esc(estado.grade?.atualizado || "—")} · grade de ~110 km</div></div>`;
+  }
+  c.innerHTML = `
+    <button class="cc-cab" id="ccAbrir" aria-expanded="${estado.cartaoAberto ? "true" : "false"}">🎨 <b>${def ? def.curto : "Camadas do mapa"}</b><span>${estado.cartaoAberto ? "▴" : "▾"}</span></button>
+    <div class="cc-corpo ${estado.cartaoAberto ? "" : "oculto"}">
+      <div class="cc-opcoes">
+        <button data-camada="" class="${!estado.camada ? "ativa" : ""}">Nenhuma</button>
+        ${Object.entries(CAMADAS).map(([k, d]) => `<button data-camada="${k}" class="${estado.camada === k ? "ativa" : ""}" ${estado.grade?.campos[k] ? "" : "disabled"}>${d.curto}</button>`).join("")}
+      </div>
+      <label class="cc-avisos"><input type="checkbox" id="ccAvisos" ${estado.mostrarAvisos ? "checked" : ""}> ⚠️ Avisos do INMET</label>
+      ${estado.mostrarAvisos ? `<div class="cc-dias"><button data-dav="hoje" class="${estado.diaAvisos === "hoje" ? "ativa" : ""}">Hoje (${nHoje})</button><button data-dav="futuro" class="${estado.diaAvisos === "futuro" ? "ativa" : ""}">Próximos dias (${nFut})</button></div>
+        <div class="cc-lista">${av.filter(a => a.quando === estado.diaAvisos).map((a, i) => `<button data-av="${a.id}"><i style="background:${esc(a.cor)}"></i><span><b>${esc(a.evento)}</b> · ${esc(a.severidade)}<small>${esc(a.estados.split(",").slice(0, 4).join(", "))}${a.estados.split(",").length > 4 ? "…" : ""}</small></span></button>`).join("") || `<p class="cc-vazio">Nenhum aviso ${estado.diaAvisos === "hoje" ? "para hoje" : "para os próximos dias"}. 👍</p>`}</div>` : ""}
+    </div>
+    ${legenda}`;
+}
+document.addEventListener("click", e => {
+  const c = e.target.closest("#cartaoCamadas"); if (!c) return;
+  if (e.target.closest("#ccAbrir")) { estado.cartaoAberto = !estado.cartaoAberto; return desenharCartaoCamadas(); }
+  const b = e.target.closest("[data-camada]");
+  if (b && !b.disabled) { estado.cartaoAberto = window.innerWidth > 820; return pintarCamada(b.dataset.camada || null); }
+  const d = e.target.closest("[data-dav]");
+  if (d) { estado.diaAvisos = d.dataset.dav; desenharAvisosMapa(); return desenharCartaoCamadas(); }
+  const a = e.target.closest("[data-av]");
+  if (a) {
+    const av = estado.avisos.avisos.find(x => String(x.id) === a.dataset.av);
+    if (av?.poligono) mapa.flyToBounds(L.geoJSON(av.poligono).getBounds(), { duration: .8, padding: [30, 30] });
+  }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "ccAvisos") { estado.mostrarAvisos = e.target.checked; desenharAvisosMapa(); desenharCartaoCamadas(); }
+});
+function mostrarValorPonto(latlng) {
+  const lp = $("legPonto"); if (!lp || !estado.camada) return;
+  const def = CAMADAS[estado.camada], v = valorGrade(estado.camada, latlng.lat, latlng.lng);
+  if (v == null) { lp.textContent = "Fora da área com dados"; return; }
+  lp.innerHTML = `Neste ponto: <b>${def.categorias ? def.rotulos[Math.round(v)] : fmt(v, def.un === "°C" ? 1 : 0) + " " + def.un}</b>`;
+}
+mapa.on("mousemove", e => mostrarValorPonto(e.latlng));
+mapa.on("click", e => mostrarValorPonto(e.latlng));
+
 /* ---------- Início ---------- */
 (async function iniciar() {
   try {
@@ -1226,6 +1457,15 @@ function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add
       }
     }).addTo(mapa);
     mapa.fitBounds(camadaUF.getBounds(), { padding: [20, 20] });
+
+    // camadas e avisos (se falharem, o resto do site segue funcionando)
+    const [grade, avisos] = await Promise.all([
+      carregarJSON("dados/camadas.json").catch(() => null),
+      carregarJSON("dados/avisos.json").catch(() => null)
+    ]);
+    estado.grade = grade; estado.avisos = avisos;
+    estado.cartaoAberto = window.innerWidth > 820;
+    desenharCartaoCamadas(); desenharAvisosMapa();
 
     // Link compartilhado: #m=código do IBGE
     const m = location.hash.match(/m=(\d{7})/);

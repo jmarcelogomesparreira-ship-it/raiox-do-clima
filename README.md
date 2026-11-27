@@ -17,6 +17,8 @@ O projeto usa um **modelo híbrido**, porque baixar o Brasil inteiro desde 1940 
 |---|---|---|
 | Mapas e lista de municípios | 🤖 Robô no GitHub Actions (Python) | Baixa as malhas do IBGE e guarda em `dados/` |
 | Clima do local escolhido | 🌐 O navegador da própria pessoa | Busca na hora, direto da API Open-Meteo, sempre atualizado |
+| Camadas do mapa | 🤖 Robô diário (Python) | Grade de 812 pontos (~110 km) com últimos 60 dias + previsão; o navegador suaviza e recorta no contorno do Brasil |
+| Avisos do INMET | 🤖 Robô diário (Python) | Avisos em vigor com área, gravidade, riscos e orientações, ligados aos municípios pelo código IBGE |
 | Histórico desde 1940 | 🌐 O navegador da própria pessoa | Baixa a reanálise ERA5 só quando a aba Histórico é aberta e calcula tudo ali mesmo (normal 1991–2020, recordes, tendência) |
 
 Assim o site mostra "todos os dados" de qualquer ponto do país sem guardar terabytes, e cada visitante usa o próprio limite da API.
@@ -26,7 +28,7 @@ Assim o site mostra "todos os dados" de qualquer ponto do país sem guardar tera
 - [x] **Etapa 1**: mapa do Brasil com zoom por estado e município, busca, "usar minha localização", clima de agora, ouvir em voz alta e link para compartilhar
 - [x] **Etapa 2**: previsão de 16 dias (gráficos de temperatura e chuva, lista dia a dia) e hora a hora (temperatura, chance de chuva, vento e umidade), com aviso de "tendência" a partir do 8º dia
 - [x] **Etapa 3**: histórico desde 1940: chuva dos últimos 30/90 dias contra a média, dias seguidos sem chuva, ano escolhido × normal 1991–2020, listras do clima, tendência de temperatura, chuva de cada ano, recordes e tabela do clima mês a mês
-- [ ] **Etapa 4**: camadas coloridas no mapa + avisos oficiais do INMET
+- [x] **Etapa 4**: camadas coloridas no mapa do Brasil (chuva 7 e 30 dias, previsão 7 dias, temperatura máxima, umidade mínima, dias sem chuva, risco de fogo) + avisos oficiais do INMET no mapa e no painel do município
 - [ ] **Etapa 5**: janela de pulverização hora a hora
 - [ ] **Etapa 6**: janelas de plantio (ZARC/MAPA + guia de hortaliças Embrapa) e colheita estimada
 - [ ] **Etapa 7**: El Niño / La Niña + modo simples com voz
@@ -38,17 +40,24 @@ Assim o site mostra "todos os dados" de qualquer ponto do país sem guardar tera
 index.html                       → o site (Leaflet + JavaScript puro)
 src/etapa1_mapas.py              → baixa as malhas e a lista de municípios do IBGE
 .github/workflows/baixar-mapas.yml → robô que roda o script e salva em dados/
+src/etapa4_camadas.py            → grade de pontos e camadas do mapa (todo dia)
+src/etapa4_avisos.py             → avisos oficiais do INMET (todo dia)
 dados/
   municipios.json                → 5.570 municípios com ponto central (busca e localização)
   mapas/brasil-estados.json      → contorno dos estados
   mapas/municipios-XX.json       → contorno dos municípios de cada estado
+  camadas.json                   → valores da grade para as camadas coloridas
+  avisos.json                    → avisos do INMET em vigor
 ```
 
 ## Fontes de dados
 
 - **IBGE**: malhas territoriais e lista de municípios (API de serviços de dados)
+- **INMET**: avisos meteorológicos oficiais (API pública de avisos)
 - **Open-Meteo**: clima atual, previsão e histórico (licença CC BY 4.0, uso não comercial)
 - Mapas de fundo: © OpenStreetMap, © CARTO, Esri, OpenTopoMap
+
+> O "risco de fogo" é um índice simplificado do próprio projeto (dias sem chuva, umidade, calor e vento), não o índice oficial do INPE.
 
 > As dicas agrícolas são orientação geral. A decisão de plantio e de aplicação de defensivos deve seguir a bula do produto e a recomendação de um agrônomo.
 
