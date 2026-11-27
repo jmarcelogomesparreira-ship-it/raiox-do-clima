@@ -96,6 +96,66 @@
   @keyframes gira{to{transform:rotate(360deg)}}
   .erro{background:#fdecec;color:#8a1f1f;border-radius:12px;padding:12px;font-size:14px}
 
+
+  /* ===== Etapa 2: abas, dias, horas e gráficos ===== */
+  .painel-cab{padding-bottom:0}
+  .abas{display:flex;gap:4px;margin:14px -18px 0;padding:0 14px;overflow-x:auto;scrollbar-width:none}
+  .abas button{border:0;background:none;padding:10px 12px 12px;font-size:14.5px;font-weight:600;color:var(--texto-2);border-bottom:3px solid transparent;white-space:nowrap}
+  .abas button.ativa{color:var(--azul-escuro);border-bottom-color:var(--azul)}
+  .resumo{font-size:14.5px;line-height:1.55;margin:0 0 12px;color:var(--texto)}
+  .mini-dias{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .mini-dia{border:1px solid var(--linha);background:var(--cartao);border-radius:12px;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:13px}
+  .mini-dia:hover{background:var(--azul-claro)}
+  .mini-dia .ic{font-size:22px}
+  .mini-dia small{color:var(--texto-2)}
+  .mini-dia .ch{font-size:11.5px}
+  .link-aba{border:0;background:none;color:var(--azul);font-weight:700;font-size:14px;padding:10px 0 0}
+  .secao.primeira{margin-top:4px}
+  .h3-extra{text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px;color:var(--texto-2);font-size:12px}
+  .lista-dias{display:flex;flex-direction:column}
+  .dia{display:grid;grid-template-columns:82px 32px 62px 1fr;align-items:center;gap:6px;border:0;border-bottom:1px solid var(--linha);background:none;padding:10px 4px;text-align:left;font-size:14px}
+  .dia:hover{background:var(--fundo)}
+  .dia.tend{opacity:.72}
+  .d-nome{font-weight:600}
+  .d-ic{font-size:22px;text-align:center}
+  .d-chuva{display:flex;flex-direction:column;font-weight:600;color:var(--texto-2);font-size:13px;line-height:1.2}
+  .d-chuva.tem{color:var(--azul-escuro)}
+  .d-chuva small{font-weight:500;font-size:11.5px}
+  .d-temp{display:flex;align-items:center;gap:8px}
+  .d-temp small{color:var(--texto-2);font-size:13px;min-width:28px;text-align:right}
+  .d-temp b{min-width:30px}
+  .faixa{flex:1;height:6px;border-radius:6px;background:var(--fundo);position:relative;display:block}
+  .faixa i{position:absolute;top:0;bottom:0;border-radius:6px;background:linear-gradient(90deg,#2a78c8,#e0662d)}
+  .sep-tend{font-size:12.5px;color:var(--texto-2);background:var(--fundo);border-radius:10px;padding:8px 10px;margin:10px 0 4px}
+  .nota{font-size:12.5px;color:var(--texto-2);margin-top:16px;line-height:1.5}
+  .chips-dias{display:flex;gap:6px;overflow-x:auto;padding:2px 0 12px;scrollbar-width:thin}
+  .chip-dia{border:1px solid var(--linha);background:var(--cartao);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;white-space:nowrap}
+  .chip-dia.ativa{background:var(--azul);color:#fff;border-color:var(--azul)}
+  .faixa-horas{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x proximity}
+  .hora{flex:0 0 84px;scroll-snap-align:start;background:var(--fundo);border-radius:12px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--texto-2)}
+  .hora b{color:var(--texto);font-size:13px}
+  .hora .ic{font-size:24px}
+  .hora .t{font-size:18px;font-weight:700;color:var(--texto)}
+  .hora.passou{opacity:.45}
+  .hora.agora-h{background:var(--azul-claro);outline:2px solid var(--azul)}
+  .graf{position:relative}
+  .graf svg{display:block;overflow:visible}
+  .g-grade{stroke:#e8edf2;stroke-width:1}
+  .g-base{stroke:#b9c5cf;stroke-width:1}
+  .g-eixo{font-size:10.5px;fill:#6b7c8a;font-family:Inter,sans-serif}
+  .g-rot{font-size:11.5px;font-weight:700;fill:var(--texto);font-family:Inter,sans-serif;paint-order:stroke;stroke:#fff;stroke-width:3px}
+  .g-mira{stroke:#8a9aa8;stroke-width:1;stroke-dasharray:3 3}
+  .g-tend{fill:#f3f6f9}
+  .g-barra{transition:opacity .15s}
+  .g-barra.acesa{opacity:.7}
+  .g-legenda{display:flex;gap:14px;font-size:12.5px;color:var(--texto-2);margin-bottom:4px}
+  .g-legenda span{display:flex;align-items:center;gap:6px}
+  .g-legenda i{width:14px;height:2.5px;border-radius:2px;display:inline-block}
+  .g-dica{position:absolute;top:6px;display:none;background:var(--cartao);border:1px solid var(--linha);box-shadow:0 4px 14px rgba(13,40,60,.15);border-radius:10px;padding:8px 10px;font-size:12.5px;pointer-events:none;white-space:nowrap;z-index:2}
+  .g-dica div{display:flex;align-items:center;gap:6px;color:var(--texto-2)}
+  .g-dica b{color:var(--texto);font-size:13.5px}
+  .g-dica .g-dica-tit{font-weight:600;color:var(--texto);margin-bottom:3px}
+  .g-dica i{width:12px;height:2.5px;border-radius:2px;display:inline-block}
   .rodape{position:fixed;left:12px;bottom:8px;z-index:998;font-size:11px;color:var(--texto-2);background:rgba(255,255,255,.85);padding:4px 8px;border-radius:8px;max-width:calc(100% - 200px)}
   .rodape a{color:var(--azul-escuro)}
   .leaflet-control-attribution{font-size:10px}
@@ -106,9 +166,9 @@
 
   /* Computador: painel na direita */
   @media (min-width:821px){
-    .painel{top:12px;right:12px;bottom:12px;width:390px;border-radius:20px}
+    .painel{top:12px;right:12px;bottom:12px;width:440px;border-radius:20px}
     .painel.fechado{transform:translateX(calc(100% + 30px))}
-    body.com-painel .acoes{right:414px}
+    body.com-painel .acoes{right:464px}
   }
   /* Celular: painel sobe de baixo */
   @media (max-width:820px){
@@ -166,6 +226,11 @@
       <button class="chip" id="btnOuvir">🔊 Ouvir</button>
       <button class="chip" id="btnLink">🔗 Compartilhar</button>
     </div>
+    <nav class="abas" id="abas" aria-label="Seções">
+      <button data-aba="agora" class="ativa">☀️ Agora</button>
+      <button data-aba="dias">📅 16 dias</button>
+      <button data-aba="hora">🕐 Hora a hora</button>
+    </nav>
   </div>
   <div class="painel-corpo" id="pCorpo"></div>
 </aside>
@@ -305,7 +370,7 @@ function voarPara(limites) {
   mapa.flyToBounds(limites, {
     duration: .9, maxZoom: 10,
     paddingTopLeft: [20, largo ? 90 : 150],
-    paddingBottomRight: [largo && estado.selecionado ? 420 : 20, largo ? 20 : (estado.selecionado ? window.innerHeight * .5 : 90)]
+    paddingBottomRight: [largo && estado.selecionado ? 470 : 20, largo ? 20 : (estado.selecionado ? window.innerHeight * .5 : 90)]
   });
 }
 
@@ -379,26 +444,62 @@ const SIG = ["N","NE","L","SE","S","SO","O","NO"];
 const direcao = g => Math.round(((g % 360) / 45)) % 8;
 const fmt = (n, c = 0) => Number(n).toLocaleString("pt-BR", { maximumFractionDigits: c, minimumFractionDigits: c });
 
+/* =========================================================
+   ETAPA 2 — Previsão: Agora · 16 dias · Hora a hora
+   Uma única chamada à Open-Meteo, feita pelo navegador.
+   ========================================================= */
+const SEMANA = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+const SEMANA_LONGA = ["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+const dataLocal = s => { const [y, m, d] = s.slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d); };
+const rotDia = (s, i) => i === 0 ? "Hoje" : i === 1 ? "Amanhã" : `${SEMANA[dataLocal(s).getDay()]} ${s.slice(8, 10)}/${s.slice(5, 7)}`;
+const DIA_CHUVA = 1; // mm — a partir disso conta como "dia com chuva"
+const COR_MAX = "#e0662d", COR_MIN = "#2a78c8", COR_CHUVA = "#2a78c8";
+
 async function buscarClimaAgora(linha, ponto) {
-  const [id, nome, uf, latM, lonM] = linha;
+  const [, , , latM, lonM] = linha;
   const lat = ponto ? ponto[0] : latM, lon = ponto ? ponto[1] : lonM;
   const url = "https://api.open-meteo.com/v1/forecast?" + new URLSearchParams({
-    latitude: lat, longitude: lon, timezone: "auto", forecast_days: 1,
+    latitude: lat, longitude: lon, timezone: "auto", forecast_days: 16,
     current: "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,cloud_cover",
-    daily: "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max,sunrise,sunset"
+    hourly: "temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,is_day",
+    daily: "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,uv_index_max,sunrise,sunset,sunshine_duration,et0_fao_evapotranspiration"
   });
   try {
     const d = await carregarJSON(url);
     if (estado.selecionado !== linha) return;
-    estado.climaAtual = d;
-    desenharAgora(linha, d, lat, lon);
+    estado.climaAtual = d; estado.local = { lat, lon };
+    estado.diaHora = 0;
+    montarFala(linha, d);
+    desenharAba();
   } catch (e) {
     if (estado.selecionado !== linha) return;
     $("pCorpo").innerHTML = `<div class="erro">Não consegui buscar o clima agora. Verifique a internet e toque no município de novo.</div>`;
   }
 }
 
-function desenharAgora(linha, d, lat, lon) {
+/* ---------- Abas ---------- */
+estado.aba = "agora";
+$("abas").addEventListener("click", e => {
+  const b = e.target.closest("button[data-aba]"); if (!b) return;
+  trocarAba(b.dataset.aba);
+});
+function trocarAba(aba) {
+  estado.aba = aba;
+  document.querySelectorAll("#abas button").forEach(x => x.classList.toggle("ativa", x.dataset.aba === aba));
+  $("pCorpo").scrollTop = 0;
+  desenharAba();
+}
+function desenharAba() {
+  const d = estado.climaAtual, linha = estado.selecionado;
+  if (!d || !linha) return;
+  if (estado.aba === "dias") desenharDias(d);
+  else if (estado.aba === "hora") desenharHoras(d);
+  else desenharAgora(linha, d);
+}
+
+/* ---------- Aba: Agora ---------- */
+function desenharAgora(linha, d) {
+  const { lat, lon } = estado.local;
   const c = d.current, dd = d.daily;
   const t = tempo(c.weather_code, c.is_day);
   const dir = direcao(c.wind_direction_10m);
@@ -422,6 +523,13 @@ function desenharAgora(linha, d, lat, lon) {
       <div class="item"><div class="r">🌇 Pôr do sol</div><div class="v">${por}</div></div>
     </div>
     <div class="secao">
+      <h3>Próximos dias</h3>
+      ${resumoSemana(d)}
+      <div class="mini-dias">${dd.time.slice(1, 6).map((s, k) => { const i = k + 1, tt = tempo(dd.weather_code[i], 1);
+        return `<button class="mini-dia" data-dia="${i}"><b>${i === 1 ? "Amanhã" : SEMANA[dataLocal(s).getDay()]}</b><span class="ic">${tt.icone}</span><span>${fmt(dd.temperature_2m_max[i])}° <small>${fmt(dd.temperature_2m_min[i])}°</small></span><small class="ch">💧${dd.precipitation_probability_max[i] ?? 0}%</small></button>`; }).join("")}</div>
+      <button class="link-aba" data-ir-aba="dias">Ver os 16 dias →</button>
+    </div>
+    <div class="secao">
       <h3>Sobre o local</h3>
       <div class="info">
         <b>${esc(linha[1])} — ${esc(linha[2])}</b><br>
@@ -430,21 +538,236 @@ function desenharAgora(linha, d, lat, lon) {
         Fuso horário: ${esc(d.timezone)}<br>
         Código IBGE: ${linha[0]}
       </div>
+    </div>`;
+}
+
+function resumoSemana(d) {
+  const dd = d.daily, n = 7;
+  let dias = 0, total = 0, iQuente = 0;
+  for (let i = 0; i < n; i++) {
+    const mm = dd.precipitation_sum[i] || 0; total += mm; if (mm >= DIA_CHUVA) dias++;
+    if (dd.temperature_2m_max[i] > dd.temperature_2m_max[iQuente]) iQuente = i;
+  }
+  const chuva = dias === 0 ? "<b>Sem chuva prevista</b> nos próximos 7 dias."
+    : `Chuva em <b>${dias} ${dias === 1 ? "dia" : "dias"}</b> dos próximos 7, somando cerca de <b>${fmt(total)} mm</b>.`;
+  return `<p class="resumo">${chuva} Dia mais quente: <b>${rotDia(dd.time[iQuente], iQuente).toLowerCase()}</b>, com ${fmt(dd.temperature_2m_max[iQuente])}°.</p>`;
+}
+
+/* ---------- Aba: 16 dias ---------- */
+function desenharDias(d) {
+  const dd = d.daily;
+  const tmin = Math.min(...dd.temperature_2m_min), tmax = Math.max(...dd.temperature_2m_max);
+  const linhas = dd.time.map((s, i) => {
+    const t = tempo(dd.weather_code[i], 1);
+    const a = ((dd.temperature_2m_min[i] - tmin) / (tmax - tmin || 1)) * 100;
+    const b = ((dd.temperature_2m_max[i] - tmin) / (tmax - tmin || 1)) * 100;
+    const prob = dd.precipitation_probability_max[i] ?? 0, mm = dd.precipitation_sum[i] || 0;
+    return `${i === 7 ? `<div class="sep-tend">📉 Daqui para frente é <b>tendência</b>: a previsão fica menos certeira</div>` : ""}
+      <button class="dia ${i >= 7 ? "tend" : ""}" data-dia="${i}" title="Ver hora a hora">
+        <span class="d-nome">${rotDia(s, i)}</span>
+        <span class="d-ic">${t.icone}</span>
+        <span class="d-chuva ${mm >= DIA_CHUVA ? "tem" : ""}">${prob}%<small>${mm >= .1 ? fmt(mm, mm < 10 ? 1 : 0) + " mm" : "—"}</small></span>
+        <span class="d-temp"><small>${fmt(dd.temperature_2m_min[i])}°</small><i class="faixa"><i style="left:${a}%;right:${100 - b}%"></i></i><b>${fmt(dd.temperature_2m_max[i])}°</b></span>
+      </button>`;
+  }).join("");
+  const totalMm = dd.precipitation_sum.reduce((s, v) => s + (v || 0), 0);
+  $("pCorpo").innerHTML = `
+    <div class="secao primeira">
+      <h3>Temperatura máxima e mínima</h3>
+      <div class="graf" id="gTemp"></div>
     </div>
     <div class="secao">
-      <h3>Chegando nas próximas etapas</h3>
-      <ul class="proximas">
-        <li>📅 Previsão de 16 dias, hora a hora</li>
-        <li>📈 Histórico desde 1940 e comparação com a média</li>
-        <li>⚠️ Alertas oficiais do INMET</li>
-        <li>🚜 Janela de pulverização e janelas de plantio</li>
-        <li>🌊 El Niño / La Niña</li>
-      </ul>
+      <h3>Chuva por dia <span class="h3-extra">total ≈ ${fmt(totalMm)} mm em 16 dias</span></h3>
+      <div class="graf" id="gChuva"></div>
+    </div>
+    <div class="secao">
+      <h3>Dia a dia <span class="h3-extra">toque num dia para ver hora a hora</span></h3>
+      <div class="lista-dias">${linhas}</div>
+    </div>
+    <p class="nota">Previsão por modelos meteorológicos (Open-Meteo). Os primeiros 7 dias são os mais confiáveis.</p>`;
+  const rot = dd.time.map((s, i) => rotDia(s, i));
+  grafLinha($("gTemp"), {
+    rotulos: rot, unidade: "°C", casas: 0,
+    series: [{ nome: "Máxima", cor: COR_MAX, valores: dd.temperature_2m_max }, { nome: "Mínima", cor: COR_MIN, valores: dd.temperature_2m_min }],
+    sombraDepois: 7
+  });
+  grafBarras($("gChuva"), {
+    rotulos: rot, unidade: "mm", casas: 1, cor: COR_CHUVA, valores: dd.precipitation_sum.map(v => v || 0),
+    extra: i => `Chance de chuva: ${dd.precipitation_probability_max[i] ?? 0}%`, sombraDepois: 7
+  });
+}
+
+/* ---------- Aba: Hora a hora ---------- */
+function desenharHoras(d) {
+  const dd = d.daily, h = d.hourly, dia = estado.diaHora || 0;
+  const ini = dia * 24, fim = ini + 24;
+  const agoraH = d.current.time.slice(0, 13);
+  const horas = h.time.slice(ini, fim);
+  const chips = dd.time.map((s, i) => `<button class="chip-dia ${i === dia ? "ativa" : ""}" data-dia="${i}">${rotDia(s, i)}</button>`).join("");
+  const cartoes = horas.map((s, k) => {
+    const i = ini + k, t = tempo(h.weather_code[i], h.is_day[i]);
+    const passou = dia === 0 && s.slice(0, 13) < agoraH, eAgora = s.slice(0, 13) === agoraH;
+    return `<div class="hora ${passou ? "passou" : ""} ${eAgora ? "agora-h" : ""}">
+      <b>${eAgora ? "Agora" : s.slice(11, 16)}</b><span class="ic">${t.icone}</span>
+      <span class="t">${fmt(h.temperature_2m[i])}°</span>
+      <small class="ch">💧${h.precipitation_probability[i] ?? 0}%</small>
+      <small>${fmt(h.wind_speed_10m[i])} km/h ${SIG[direcao(h.wind_direction_10m[i])]}</small>
+      <small>💦 ${fmt(h.relative_humidity_2m[i])}%</small>
     </div>`;
+  }).join("");
+  $("pCorpo").innerHTML = `
+    <div class="chips-dias">${chips}</div>
+    <p class="resumo">${resumoDia(d, dia)}</p>
+    <div class="secao primeira"><h3>Temperatura</h3><div class="graf" id="gHT"></div></div>
+    <div class="secao"><h3>Chance de chuva</h3><div class="graf" id="gHC"></div></div>
+    <div class="secao"><h3>Hora por hora <span class="h3-extra">arraste para o lado</span></h3><div class="faixa-horas" id="fHoras">${cartoes}</div></div>
+    ${dia >= 7 ? `<p class="nota">Este dia já está na faixa de <b>tendência</b>: use como ideia geral, não como certeza.</p>` : ""}`;
+  const rot = horas.map(s => s.slice(11, 13) + "h");
+  grafLinha($("gHT"), { rotulos: rot, unidade: "°C", casas: 0, series: [{ nome: "Temperatura", cor: COR_MAX, valores: h.temperature_2m.slice(ini, fim) }] });
+  grafBarras($("gHC"), { rotulos: rot, unidade: "%", casas: 0, cor: COR_CHUVA, valores: h.precipitation_probability.slice(ini, fim).map(v => v ?? 0), max: 100,
+    extra: k => `Chuva: ${fmt(h.precipitation[ini + k] || 0, 1)} mm` });
+  const atual = $("fHoras").querySelector(".agora-h");
+  if (atual) $("fHoras").scrollLeft = atual.offsetLeft - 12;
+  $("pCorpo").querySelector(".chip-dia.ativa")?.scrollIntoView({ inline: "center", block: "nearest" });
+}
+
+function resumoDia(d, i) {
+  const dd = d.daily, t = tempo(dd.weather_code[i], 1);
+  const nome = i === 0 ? "Hoje" : i === 1 ? "Amanhã" : `${SEMANA_LONGA[dataLocal(dd.time[i]).getDay()]}, ${dd.time[i].slice(8, 10)}/${dd.time[i].slice(5, 7)}`;
+  const mm = dd.precipitation_sum[i] || 0;
+  const sol = dd.sunshine_duration?.[i] != null ? ` · ☀️ ${fmt(dd.sunshine_duration[i] / 3600)} h de sol` : "";
+  return `<b>${nome}:</b> ${t.icone} ${t.texto.toLowerCase()} · ${fmt(dd.temperature_2m_min[i])}° a ${fmt(dd.temperature_2m_max[i])}° · ` +
+    `${mm >= .1 ? `🌧️ ${fmt(mm, 1)} mm` : "sem chuva"} · 💨 até ${fmt(dd.wind_gusts_10m_max[i])} km/h${sol}`;
+}
+
+/* Cliques dentro do painel: dias, mini-dias, chips, links de aba */
+$("pCorpo").addEventListener("click", e => {
+  const ir = e.target.closest("[data-ir-aba]"); if (ir) return trocarAba(ir.dataset.irAba);
+  const dia = e.target.closest("[data-dia]");
+  if (dia) { estado.diaHora = +dia.dataset.dia; trocarAba("hora"); }
+});
+
+/* ---------- Fala (botão Ouvir) ---------- */
+function montarFala(linha, d) {
+  const c = d.current, dd = d.daily, t = tempo(c.weather_code, c.is_day), dir = direcao(c.wind_direction_10m);
+  const ta = tempo(dd.weather_code[1], 1);
   estado.textoFala = `${linha[1]}, ${estado.estados[linha[2]]?.nome || linha[2]}. Agora: ${fmt(c.temperature_2m)} graus, ${t.texto}. ` +
-    `Máxima de ${fmt(dd.temperature_2m_max[0])} e mínima de ${fmt(dd.temperature_2m_min[0])} graus. ` +
+    `Hoje, máxima de ${fmt(dd.temperature_2m_max[0])} e mínima de ${fmt(dd.temperature_2m_min[0])} graus, chance de chuva de ${dd.precipitation_probability_max[0] ?? 0} por cento. ` +
     `Umidade do ar ${fmt(c.relative_humidity_2m)} por cento. Vento de ${fmt(c.wind_speed_10m)} quilômetros por hora, vindo do ${DIRS[dir]}. ` +
-    `Chance de chuva hoje: ${dd.precipitation_probability_max[0] ?? 0} por cento.`;
+    `Amanhã: ${ta.texto}, de ${fmt(dd.temperature_2m_min[1])} a ${fmt(dd.temperature_2m_max[1])} graus, chance de chuva de ${dd.precipitation_probability_max[1] ?? 0} por cento.`;
+}
+
+/* =========================================================
+   Gráficos em SVG (leves, sem biblioteca), com dica ao
+   passar o mouse ou tocar.
+   ========================================================= */
+const SVGNS = "http://www.w3.org/2000/svg";
+function el(tag, at = {}, pai) { const n = document.createElementNS(SVGNS, tag); for (const k in at) n.setAttribute(k, at[k]); pai?.appendChild(n); return n; }
+function escalaBonita(min, max, passos = 4) {
+  if (min === max) { min -= 1; max += 1; }
+  const bruto = (max - min) / passos, mag = 10 ** Math.floor(Math.log10(bruto));
+  const passo = [1, 2, 2.5, 5, 10].map(m => m * mag).find(p => p >= bruto);
+  const a = Math.floor(min / passo) * passo, b = Math.ceil(max / passo) * passo;
+  const ticks = []; for (let v = a; v <= b + 1e-9; v += passo) ticks.push(+v.toFixed(6));
+  return { a, b, ticks };
+}
+function baseGrafico(cont, rotulos, { a, b, ticks }, unidade, sombraDepois) {
+  cont.innerHTML = "";
+  const W = Math.max(cont.clientWidth, 260), H = 170, m = { t: 14, r: 10, b: 24, l: 34 };
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", height: H, role: "img" }, cont);
+  const n = rotulos.length, pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const x = i => m.l + (n === 1 ? pw / 2 : (i + .5) * (pw / n));
+  const y = v => m.t + ph - ((v - a) / (b - a)) * ph;
+  if (sombraDepois != null && sombraDepois < n) el("rect", { x: m.l + sombraDepois * (pw / n), y: m.t, width: pw - sombraDepois * (pw / n), height: ph, class: "g-tend" }, svg);
+  ticks.forEach(v => {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "g-base" : "g-grade" }, svg);
+    const t = el("text", { x: m.l - 6, y: y(v) + 4, class: "g-eixo", "text-anchor": "end" }, svg); t.textContent = fmt(v);
+  });
+  const largRot = Math.max(...rotulos.map(r => String(r).length)) * 6.2 + 10;
+  const pulo = Math.max(1, Math.ceil(n / Math.floor(pw / largRot)));
+  rotulos.forEach((r, i) => { if (i % pulo) return; const t = el("text", { x: x(i), y: H - 6, class: "g-eixo", "text-anchor": "middle" }, svg); t.textContent = r; });
+  const u = el("text", { x: 4, y: 10, class: "g-eixo" }, svg); u.textContent = unidade;
+  const dica = document.createElement("div"); dica.className = "g-dica"; cont.appendChild(dica);
+  return { svg, W, H, m, n, pw, ph, x, y, dica };
+}
+function posDica(g, cont, px, linhas) {
+  g.dica.replaceChildren();
+  linhas.forEach(([txt, cor, forte], k) => {
+    const p = document.createElement("div"); if (k === 0) p.className = "g-dica-tit";
+    if (cor) { const s = document.createElement("i"); s.style.background = cor; p.appendChild(s); }
+    const t = document.createElement(forte ? "b" : "span"); t.textContent = txt; p.appendChild(t);
+    g.dica.appendChild(p);
+  });
+  g.dica.style.display = "block";
+  const larg = g.dica.offsetWidth, escala = cont.clientWidth / g.W;
+  let left = px * escala + 12; if (left + larg > cont.clientWidth) left = px * escala - larg - 12;
+  g.dica.style.left = Math.max(0, left) + "px";
+}
+function interativo(g, cont, aoMover, aoSair) {
+  const alvo = el("rect", { x: g.m.l, y: 0, width: g.pw, height: g.H, fill: "transparent", style: "cursor:crosshair" }, g.svg);
+  const mover = ev => {
+    const r = g.svg.getBoundingClientRect(), px = (ev.clientX - r.left) * (g.W / r.width);
+    const i = Math.max(0, Math.min(g.n - 1, Math.floor((px - g.m.l) / (g.pw / g.n))));
+    aoMover(i);
+  };
+  alvo.addEventListener("pointermove", mover);
+  alvo.addEventListener("pointerdown", mover);
+  alvo.addEventListener("pointerleave", () => { g.dica.style.display = "none"; aoSair(); });
+}
+
+function grafLinha(cont, { rotulos, series, unidade, casas = 0, sombraDepois }) {
+  const todos = series.flatMap(s => s.valores).filter(v => v != null);
+  const esc = escalaBonita(Math.min(...todos), Math.max(...todos));
+  const g = baseGrafico(cont, rotulos, esc, unidade, sombraDepois);
+  if (series.length > 1) {
+    const leg = document.createElement("div"); leg.className = "g-legenda";
+    series.forEach(s => { const it = document.createElement("span"); const k = document.createElement("i"); k.style.background = s.cor; it.append(k, document.createTextNode(s.nome)); leg.appendChild(it); });
+    cont.prepend(leg);
+  }
+  series.forEach(s => {
+    const pts = s.valores.map((v, i) => `${g.x(i)},${g.y(v)}`).join(" ");
+    el("polyline", { points: pts, fill: "none", stroke: s.cor, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, g.svg);
+  });
+  // rótulos só nos extremos: maior da 1ª série e menor da última
+  const marca = (s, i, acima) => {
+    el("circle", { cx: g.x(i), cy: g.y(s.valores[i]), r: 4, fill: s.cor, stroke: "#fff", "stroke-width": 2 }, g.svg);
+    const t = el("text", { x: g.x(i), y: g.y(s.valores[i]) + (acima ? -9 : 17), class: "g-rot", "text-anchor": "middle" }, g.svg);
+    t.textContent = fmt(s.valores[i], casas) + "°";
+  };
+  const s0 = series[0], sN = series[series.length - 1];
+  marca(s0, s0.valores.indexOf(Math.max(...s0.valores)), true);
+  if (series.length > 1) marca(sN, sN.valores.indexOf(Math.min(...sN.valores)), false);
+  const mira = el("line", { y1: g.m.t, y2: g.m.t + g.ph, class: "g-mira", style: "display:none" }, g.svg);
+  const pontos = series.map(s => el("circle", { r: 5, fill: s.cor, stroke: "#fff", "stroke-width": 2, style: "display:none;pointer-events:none" }, g.svg));
+  interativo(g, cont, i => {
+    mira.setAttribute("x1", g.x(i)); mira.setAttribute("x2", g.x(i)); mira.style.display = "";
+    pontos.forEach((p, k) => { p.setAttribute("cx", g.x(i)); p.setAttribute("cy", g.y(series[k].valores[i])); p.style.display = ""; });
+    posDica(g, cont, g.x(i), [[rotulos[i]], ...series.map(s => [`${fmt(s.valores[i], casas)} ${unidade}  ${s.nome}`, s.cor, true])]);
+  }, () => { mira.style.display = "none"; pontos.forEach(p => p.style.display = "none"); });
+}
+
+function grafBarras(cont, { rotulos, valores, cor, unidade, casas = 0, max, extra, sombraDepois }) {
+  const esc = escalaBonita(0, Math.max(max ?? 0, ...valores, unidade === "mm" ? 5 : 1));
+  const g = baseGrafico(cont, rotulos, esc, unidade, sombraDepois);
+  const larg = Math.max(2, Math.min(22, g.pw / g.n - 2));
+  const barras = valores.map((v, i) => {
+    const h = Math.max(0, g.y(0) - g.y(v));
+    if (h < .5) return null;
+    const r = Math.min(4, larg / 2, h);
+    const x0 = g.x(i) - larg / 2, y0 = g.y(v);
+    // topo arredondado, base reta na linha do zero
+    return el("path", { d: `M${x0},${g.y(0)} V${y0 + r} Q${x0},${y0} ${x0 + r},${y0} H${x0 + larg - r} Q${x0 + larg},${y0} ${x0 + larg},${y0 + r} V${g.y(0)} Z`, fill: cor, class: "g-barra" }, g.svg);
+  });
+  // destaca o maior valor com rótulo
+  const iMax = valores.indexOf(Math.max(...valores));
+  if (valores[iMax] > 0) { const t = el("text", { x: g.x(iMax), y: g.y(valores[iMax]) - 6, class: "g-rot", "text-anchor": "middle" }, g.svg); t.textContent = fmt(valores[iMax], casas) + (unidade === "%" ? "%" : ""); }
+  let acesa = null;
+  interativo(g, cont, i => {
+    if (acesa) acesa.classList.remove("acesa"); acesa = barras[i]; acesa?.classList.add("acesa");
+    const linhas = [[rotulos[i]], [`${fmt(valores[i], casas)} ${unidade}`, cor, true]];
+    if (extra) linhas.push([extra(i)]);
+    posDica(g, cont, g.x(i), linhas);
+  }, () => { acesa?.classList.remove("acesa"); acesa = null; });
 }
 
 /* ---------- Ouvir e compartilhar ---------- */

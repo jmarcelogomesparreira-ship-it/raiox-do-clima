@@ -23,7 +23,7 @@ Assim o site mostra "todos os dados" de qualquer ponto do país sem guardar tera
 ## Etapas
 
 - [x] **Etapa 1**: mapa do Brasil com zoom por estado e município, busca, "usar minha localização", clima de agora, ouvir em voz alta e link para compartilhar
-- [ ] **Etapa 2**: previsão de 16 dias, hora a hora
+- [x] **Etapa 2**: previsão de 16 dias (gráficos de temperatura e chuva, lista dia a dia) e hora a hora (temperatura, chance de chuva, vento e umidade), com aviso de "tendência" a partir do 8º dia
 - [ ] **Etapa 3**: histórico desde 1940 e comparação com a média
 - [ ] **Etapa 4**: camadas coloridas no mapa + avisos oficiais do INMET
 - [ ] **Etapa 5**: janela de pulverização hora a hora
