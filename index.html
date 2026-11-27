@@ -99,7 +99,7 @@
 
   /* ===== Etapa 2: abas, dias, horas e gráficos ===== */
   .painel-cab{padding-bottom:0}
-  .abas{display:grid;grid-template-columns:repeat(4,1fr);margin:14px -18px 0;padding:0 8px}
+  .abas{display:grid;grid-template-columns:repeat(5,1fr);margin:14px -18px 0;padding:0 8px}
   .abas button{border:0;background:none;padding:8px 2px 10px;font-size:13px;font-weight:600;color:var(--texto-2);border-bottom:3px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2}
   .abas button .ic-aba{font-size:18px}
   .abas button.ativa{color:var(--azul-escuro);border-bottom-color:var(--azul)}
@@ -233,6 +233,36 @@
     .cartao-camadas{top:184px;width:auto;max-width:calc(100% - 24px)}
     body.com-painel .cartao-camadas{display:none}
   }
+
+  /* ===== Etapa 5: pulverização ===== */
+  .abas button{font-size:12px}
+  .veredito{display:flex;gap:12px;align-items:flex-start;border-radius:14px;padding:14px;margin-bottom:14px;border:2px solid}
+  .veredito.bom{background:#e9f6ee;border-color:#2f9e5b}
+  .veredito.atencao{background:#fdf7dc;border-color:#e6c229}
+  .veredito.ruim{background:#fdecec;border-color:#dc3c3d}
+  .veredito .v-ic{font-size:30px;line-height:1}
+  .veredito b{font-size:16.5px}
+  .veredito p{margin:4px 0 0;font-size:14px;line-height:1.5}
+  .semaforo{display:flex;flex-direction:column;gap:3px}
+  .sem-linha{display:flex;align-items:center;gap:6px}
+  .sem-dia{flex:0 0 58px;font-size:12px;font-weight:600;color:var(--texto-2)}
+  .sem-cels{flex:1;display:grid;grid-template-columns:repeat(24,1fr);gap:2px}
+  .sem-horas span{font-size:10px;color:var(--texto-2)}
+  .cel{border:0;padding:0;height:20px;border-radius:3px;cursor:pointer}
+  .cel.bom{background:#2f9e5b}.cel.atencao{background:#e6c229}.cel.ruim{background:#dc3c3d}.cel.passou{background:#e3e8ed;cursor:default}
+  .cel:hover{outline:2px solid var(--texto);outline-offset:1px}
+  .cel.sel{outline:2.5px solid var(--texto);outline-offset:1px}
+  .sem-leg{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--texto-2);margin-top:8px}
+  .sem-leg span{display:flex;align-items:center;gap:5px}
+  .sem-leg i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .det-hora{background:var(--fundo);border-radius:12px;padding:12px;margin-top:10px;font-size:13.5px;color:var(--texto-2);line-height:1.5}
+  .det-hora b{color:var(--texto)}
+  .det-hora ul{margin:6px 0 0;padding-left:18px;color:var(--texto)}
+  .det-hora p{margin:6px 0 0;color:var(--texto)}
+  .det-vals{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px;color:var(--texto)}
+  .criterios{margin-top:12px;font-size:13.5px;line-height:1.5}
+  .criterios summary{cursor:pointer;font-weight:600;color:var(--azul-escuro)}
+  .criterios ul{padding-left:18px;margin:8px 0 0}
   .rodape{position:fixed;left:12px;bottom:8px;z-index:998;font-size:11px;color:var(--texto-2);background:rgba(255,255,255,.85);padding:4px 8px;border-radius:8px;max-width:calc(100% - 200px)}
   .rodape a{color:var(--azul-escuro)}
   .leaflet-control-attribution{font-size:10px}
@@ -309,6 +339,7 @@
       <button data-aba="dias"><span class="ic-aba">📅</span>16 dias</button>
       <button data-aba="hora"><span class="ic-aba">🕐</span>Hora a hora</button>
       <button data-aba="hist"><span class="ic-aba">📈</span>Histórico</button>
+      <button data-aba="campo"><span class="ic-aba">🌱</span>Campo</button>
     </nav>
   </div>
   <div class="painel-corpo" id="pCorpo"></div>
@@ -580,6 +611,7 @@ function desenharAba() {
   if (estado.aba === "dias") desenharDias(d);
   else if (estado.aba === "hora") desenharHoras(d);
   else if (estado.aba === "hist") desenharHistorico();
+  else if (estado.aba === "campo") desenharCampo(d);
   else desenharAgora(linha, d);
 }
 
@@ -1029,6 +1061,149 @@ function grafBarras2(cont, { rotulos, unidade, series, casas = 0 }) {
   }, () => { acesas.forEach(b => b.classList.remove("acesa")); acesas = []; });
 }
 
+/* =========================================================
+   ETAPA 5 — Janela de pulverização, hora a hora (7 dias)
+   Regras de boas práticas de aplicação: vento, chuva,
+   temperatura, umidade e Delta T. Não substitui a bula.
+   ========================================================= */
+const NIVEL = ["bom", "atencao", "ruim"];
+const COR_NIVEL = { bom: "#2f9e5b", atencao: "#e6c229", ruim: "#dc3c3d", passou: "#e3e8ed" };
+const ROT_NIVEL = { bom: "Bom", atencao: "Atenção", ruim: "Evitar" };
+
+/* Temperatura de bulbo úmido (fórmula de Stull, 2011) → Delta T = T − Tu */
+function deltaT(t, ur) {
+  const tw = t * Math.atan(0.151977 * Math.sqrt(ur + 8.313659)) + Math.atan(t + ur) - Math.atan(ur - 1.676331)
+    + 0.00391838 * ur ** 1.5 * Math.atan(0.023101 * ur) - 4.686035;
+  return t - tw;
+}
+
+function avaliarHora(h, i) {
+  const t = h.temperature_2m[i], ur = h.relative_humidity_2m[i];
+  const v10 = h.wind_speed_10m[i], raj = h.wind_gusts_10m[i];
+  const v = v10 * 0.75; // vento estimado na altura da barra (~2 m)
+  const dT = deltaT(t, ur);
+  const chuvaProx = [0, 1, 2].reduce((s, k) => s + (h.precipitation[i + k] || 0), 0);
+  const probProx = Math.max(...[0, 1, 2].map(k => h.precipitation_probability[i + k] ?? 0));
+  const motivos = []; let pior = 0;
+  const marca = (n, txt) => { pior = Math.max(pior, n); if (n) motivos.push([n, txt]); };
+  // chuva: lava o produto da folha
+  if (chuvaProx >= 0.5 || probProx >= 60) marca(2, `chuva prevista nas próximas horas (${probProx}%)`);
+  else if (chuvaProx >= 0.1 || probProx >= 35) marca(1, `pode chover nas próximas horas (${probProx}%)`);
+  // vento
+  if (v < 2) marca(2, `vento muito fraco (${fmt(v)} km/h): risco de inversão térmica, a névoa fica parada e deriva`);
+  else if (v < 3) marca(1, `vento fraco (${fmt(v)} km/h): cuidado com inversão térmica`);
+  else if (v > 15) marca(2, `vento forte (${fmt(v)} km/h): o produto vai embora com o vento`);
+  else if (v > 10) marca(1, `vento um pouco forte (${fmt(v)} km/h)`);
+  if (raj > 30) marca(1, `rajadas de até ${fmt(raj)} km/h`);
+  // temperatura e umidade: evaporação da gota
+  if (t > 35) marca(2, `muito quente (${fmt(t)}°C): a gota evapora antes de chegar`);
+  else if (t > 30) marca(1, `quente (${fmt(t)}°C)`);
+  if (ur < 40) marca(2, `ar muito seco (${fmt(ur)}%)`);
+  else if (ur < 55) marca(1, `ar seco (${fmt(ur)}%)`);
+  // Delta T (ideal entre 2 e 8)
+  if (dT > 10) marca(2, `Delta T alto (${fmt(dT, 1)}): evaporação rápida`);
+  else if (dT > 8) marca(1, `Delta T no limite (${fmt(dT, 1)})`);
+  else if (dT < 2 && pior < 2) marca(1, `Delta T baixo (${fmt(dT, 1)}): a gota demora a secar e pode escorrer`);
+  return { nivel: NIVEL[pior], t, ur, v, raj, dT, prob: h.precipitation_probability[i] ?? 0, motivos: motivos.sort((a, b) => b[0] - a[0]).map(m => m[1]) };
+}
+
+/* blocos seguidos de horas boas (mín. 2 h) num dia */
+function janelasBoas(av, ini, fim, desde) {
+  const jan = []; let a = null;
+  for (let i = ini; i <= fim; i++) {
+    const ok = i < fim && i >= desde && av[i].nivel === "bom";
+    if (ok && a == null) a = i;
+    if (!ok && a != null) { if (i - a >= 2) jan.push([a, i]); a = null; }
+  }
+  return jan.sort((x, y) => (y[1] - y[0]) - (x[1] - x[0]));
+}
+const hh = (h, i) => h.time[i].slice(11, 13) + "h";
+
+function analisarPulverizacao(d) {
+  const h = d.hourly, n = Math.min(168, h.time.length - 3);
+  const av = []; for (let i = 0; i < n; i++) av.push(avaliarHora(h, i));
+  const agora = h.time.findIndex(t => t.slice(0, 13) === d.current.time.slice(0, 13));
+  const desde = Math.max(0, agora);
+  const hoje = janelasBoas(av, 0, 24, desde), amanha = janelasBoas(av, 24, 48, 0);
+  let proxima = null;
+  for (let k = 1; k < 7 && !proxima; k++) { const j = janelasBoas(av, k * 24, (k + 1) * 24, desde); if (j.length) proxima = [k, j.sort((x, y) => x[0] - y[0])[0]]; }
+  return { av, n, desde, hoje, amanha, proxima };
+}
+
+function fraseJanela(P, h, d) {
+  if (P.hoje.length) {
+    const [a, b] = P.hoje[0];
+    return { nivel: "bom", titulo: "Sim, dá para aplicar hoje", texto: `Melhor horário: <b>das ${hh(h, a)} às ${hh(h, b)}</b>.` + (P.hoje.length > 1 ? ` Outra janela: ${hh(h, P.hoje[1][0])} às ${hh(h, P.hoje[1][1])}.` : "") };
+  }
+  const restoHoje = P.av.slice(P.desde, 24);
+  const motivo = contarMotivo(restoHoje);
+  const quando = P.proxima ? (P.proxima[0] === 1 ? "amanhã" : rotDia(d.daily.time[P.proxima[0]], P.proxima[0]).toLowerCase()) : null;
+  const prox = P.proxima ? ` Próxima janela boa: <b>${quando}, das ${hh(h, P.proxima[1][0])} às ${hh(h, P.proxima[1][1])}</b>.` : " Não achei janela boa nos próximos 7 dias.";
+  const temAtencao = restoHoje.some(x => x.nivel === "atencao");
+  return { nivel: temAtencao ? "atencao" : "ruim", titulo: temAtencao ? "Hoje só com cuidado" : "Hoje não é bom aplicar", texto: (motivo ? `Principal motivo: ${motivo}.` : "") + prox };
+}
+function contarMotivo(lista) {
+  const cont = {};
+  lista.forEach(x => x.motivos.forEach(m => { const k = m.replace(/\s*\(.*$/, "").replace(/:.*/, ""); cont[k] = (cont[k] || 0) + 1; }));
+  return Object.entries(cont).sort((a, b) => b[1] - a[1])[0]?.[0] || "";
+}
+
+function desenharCampo(d) {
+  const h = d.hourly, P = analisarPulverizacao(d);
+  estado.pulv = P;
+  const F = fraseJanela(P, h, d);
+  const dias = Math.floor(P.n / 24);
+  const linhas = [];
+  for (let k = 0; k < dias; k++) {
+    const celulas = [];
+    for (let j = 0; j < 24; j++) {
+      const i = k * 24 + j, a = P.av[i], passou = i < P.desde;
+      celulas.push(`<button class="cel ${passou ? "passou" : a.nivel}" data-h="${i}" aria-label="${rotDia(d.daily.time[k], k)} ${j}h: ${passou ? "já passou" : ROT_NIVEL[a.nivel]}"></button>`);
+    }
+    linhas.push(`<div class="sem-linha"><span class="sem-dia">${k === 0 ? "Hoje" : k === 1 ? "Amanhã" : SEMANA[dataLocal(d.daily.time[k]).getDay()] + " " + d.daily.time[k].slice(8, 10)}</span><div class="sem-cels">${celulas.join("")}</div></div>`);
+  }
+  $("pCorpo").innerHTML = `
+    <div class="secao primeira">
+      <h3>🚜 Janela de pulverização</h3>
+      <div class="veredito ${F.nivel}">
+        <div class="v-ic">${F.nivel === "bom" ? "🟢" : F.nivel === "atencao" ? "🟡" : "🔴"}</div>
+        <div><b>${F.titulo}</b><p>${F.texto}</p></div>
+      </div>
+      <div class="semaforo">
+        <div class="sem-linha sem-horas"><span class="sem-dia"></span><div class="sem-cels">${Array.from({ length: 24 }, (_, j) => `<span>${j % 3 === 0 ? j : ""}</span>`).join("")}</div></div>
+        ${linhas.join("")}
+      </div>
+      <div class="sem-leg"><span><i style="background:${COR_NIVEL.bom}"></i>Bom</span><span><i style="background:${COR_NIVEL.atencao}"></i>Atenção</span><span><i style="background:${COR_NIVEL.ruim}"></i>Evitar</span><span><i style="background:${COR_NIVEL.passou}"></i>Já passou</span></div>
+      <div class="det-hora" id="detHora">Toque num quadradinho para ver o porquê daquela hora.</div>
+      <details class="criterios">
+        <summary>Como o Raio-X decide (critérios)</summary>
+        <ul>
+          <li><b>Vento</b> na altura da barra entre <b>3 e 10 km/h</b>. Abaixo de 3, risco de inversão térmica (a névoa fica parada e deriva longe); acima de 10–15, o vento leva o produto.</li>
+          <li><b>Sem chuva</b> nas próximas 2–3 horas, para o produto não ser lavado da folha.</li>
+          <li><b>Temperatura</b> abaixo de 30 °C e <b>umidade do ar</b> acima de 55%, para a gota não evaporar no caminho.</li>
+          <li><b>Delta T</b> entre 2 e 8 (diferença entre o termômetro seco e o molhado; mede a evaporação).</li>
+          <li>O vento da previsão é a 10 m de altura; o Raio-X estima o vento na barra (~2 m) como 75% dele.</li>
+        </ul>
+      </details>
+      <p class="nota">⚠️ Orientação geral baseada na previsão do tempo. Sempre siga a <b>bula</b> do produto, use EPI e a <b>receita agronômica</b> (obrigatória para comprar e aplicar defensivos). Produtos diferentes têm exigências diferentes.</p>
+    </div>
+    <div class="secao">
+      <h3>🌱 Plantio e colheita</h3>
+      <ul class="proximas"><li>📅 Janelas de plantio por cultura (ZARC) e guia de hortaliças chegam na próxima etapa</li></ul>
+    </div>`;
+  const det = $("detHora");
+  $("pCorpo").querySelector(".semaforo").addEventListener("click", e => {
+    const c = e.target.closest(".cel"); if (!c) return;
+    $("pCorpo").querySelectorAll(".cel.sel").forEach(x => x.classList.remove("sel")); c.classList.add("sel");
+    const i = +c.dataset.h, a = P.av[i], k = Math.floor(i / 24);
+    const quando = `${rotDia(d.daily.time[k], k)}, ${h.time[i].slice(11, 16)}`;
+    if (i < P.desde) { det.innerHTML = `<b>${quando}</b>: esse horário já passou.`; return; }
+    det.innerHTML = `<b>${quando} · ${a.nivel === "bom" ? "🟢" : a.nivel === "atencao" ? "🟡" : "🔴"} ${ROT_NIVEL[a.nivel]}</b>
+      <div class="det-vals"><span>🌡️ ${fmt(a.t)}°C</span><span>💦 ${fmt(a.ur)}%</span><span>💨 ${fmt(a.v)} km/h (barra)</span><span>☔ ${a.prob}%</span><span>Δ T ${fmt(a.dT, 1)}</span></div>
+      ${a.motivos.length ? `<ul>${a.motivos.map(m => `<li>${m}</li>`).join("")}</ul>` : `<p>Condições boas para aplicar.</p>`}`;
+  });
+}
+
 /* ---------- Fala (botão Ouvir) ---------- */
 function montarFala(linha, d) {
   const c = d.current, dd = d.daily, t = tempo(c.weather_code, c.is_day), dir = direcao(c.wind_direction_10m);
@@ -1037,7 +1212,8 @@ function montarFala(linha, d) {
     `Hoje, máxima de ${fmt(dd.temperature_2m_max[0])} e mínima de ${fmt(dd.temperature_2m_min[0])} graus, chance de chuva de ${dd.precipitation_probability_max[0] ?? 0} por cento. ` +
     `Umidade do ar ${fmt(c.relative_humidity_2m)} por cento. Vento de ${fmt(c.wind_speed_10m)} quilômetros por hora, vindo do ${DIRS[dir]}. ` +
     `Amanhã: ${ta.texto}, de ${fmt(dd.temperature_2m_min[1])} a ${fmt(dd.temperature_2m_max[1])} graus, chance de chuva de ${dd.precipitation_probability_max[1] ?? 0} por cento.` +
-    avisosDoMunicipio(linha[0]).map(a => ` Atenção: aviso do INMET de ${a.evento}, grau ${a.severidade}.`).join("");
+    avisosDoMunicipio(linha[0]).map(a => ` Atenção: aviso do INMET de ${a.evento}, grau ${a.severidade}.`).join("") +
+    (() => { try { const F = fraseJanela(analisarPulverizacao(d), d.hourly, d); return ` Pulverização: ${F.titulo}. ${F.texto.replace(/<[^>]+>/g, "")}`; } catch (_) { return ""; } })();
 }
 
 /* =========================================================

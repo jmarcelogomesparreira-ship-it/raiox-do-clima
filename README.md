@@ -29,7 +29,7 @@ Assim o site mostra "todos os dados" de qualquer ponto do país sem guardar tera
 - [x] **Etapa 2**: previsão de 16 dias (gráficos de temperatura e chuva, lista dia a dia) e hora a hora (temperatura, chance de chuva, vento e umidade), com aviso de "tendência" a partir do 8º dia
 - [x] **Etapa 3**: histórico desde 1940: chuva dos últimos 30/90 dias contra a média, dias seguidos sem chuva, ano escolhido × normal 1991–2020, listras do clima, tendência de temperatura, chuva de cada ano, recordes e tabela do clima mês a mês
 - [x] **Etapa 4**: camadas coloridas no mapa do Brasil (chuva 7 e 30 dias, previsão 7 dias, temperatura máxima, umidade mínima, dias sem chuva, risco de fogo) + avisos oficiais do INMET no mapa e no painel do município
-- [ ] **Etapa 5**: janela de pulverização hora a hora
+- [x] **Etapa 5**: janela de pulverização hora a hora (aba 🌱 Campo): semáforo de 7 dias × 24 horas com vento na barra, chuva, temperatura, umidade e Delta T, resposta direta "pode aplicar hoje?" e próxima janela boa
 - [ ] **Etapa 6**: janelas de plantio (ZARC/MAPA + guia de hortaliças Embrapa) e colheita estimada
 - [ ] **Etapa 7**: El Niño / La Niña + modo simples com voz
 - [ ] **Etapa 8**: revisão geral e vídeo
