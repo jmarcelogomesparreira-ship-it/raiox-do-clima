@@ -296,6 +296,62 @@
   .horta-card b{font-size:13.5px}
   .horta-card small{font-size:11px;color:var(--texto-2)}
   .horta-det{margin-top:12px}
+
+  /* ===== Etapa 7: El Niño e modo fácil ===== */
+  .btn-simples{pointer-events:auto;border:0;background:var(--cartao);border-radius:var(--raio);height:52px;padding:0 16px;box-shadow:var(--sombra);font-size:14.5px;font-weight:700;white-space:nowrap;color:var(--texto)}
+  .btn-simples.ativa{background:#14212b;color:#fff}
+  .enso-mini{width:100%;display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--linha);border-left:5px solid var(--cor-enso);background:var(--cartao);border-radius:12px;padding:10px 12px;margin-top:14px}
+  .enso-mini > span:first-child{font-size:24px}
+  .enso-mini b{display:block;font-size:14px}
+  .enso-mini small{display:block;font-size:12.5px;color:var(--texto-2);margin-top:2px;line-height:1.4}
+  .enso-cab{display:flex;gap:12px;align-items:flex-start;border-radius:14px;padding:14px;border:2px solid var(--cor-enso);background:color-mix(in srgb,var(--cor-enso) 10%,#fff)}
+  .enso-cab .enso-ic{font-size:32px;line-height:1}
+  .enso-cab b{font-size:16px}
+  .enso-cab p{margin:4px 0 0;font-size:13.5px;line-height:1.5}
+  .enso-reg{background:var(--fundo);border-radius:12px;padding:12px;margin:12px 0;font-size:14px;line-height:1.5}
+  .enso-reg p{margin:6px 0 0}
+  .sub-h3{margin-top:14px!important}
+  body.simples .abas{display:none}
+  body.simples .painel-cab .botoes-cab{display:none}
+  body.simples .painel h2{font-size:28px}
+  body.simples .painel .sub{font-size:16px}
+  body.simples .busca input{font-size:19px;height:60px}
+  body.simples .btn-flut{font-size:17px;height:58px}
+  body.simples .btn-simples{height:60px;font-size:16px}
+  @media (min-width:821px){ body.simples .painel{width:500px} body.simples.com-painel .acoes{right:524px} }
+  .facil-ouvir{width:100%;border:0;background:var(--azul);color:#fff;border-radius:16px;padding:16px;font-size:20px;font-weight:800;margin-bottom:14px}
+  .facil-sair{width:100%;border:2px solid var(--linha);background:var(--cartao);border-radius:16px;padding:14px;font-size:17px;font-weight:700;margin-top:6px}
+  .facil{background:var(--fundo);border-radius:18px;padding:16px;margin-bottom:12px;border:3px solid transparent}
+  .facil .f-pergunta{font-size:18px;font-weight:800;margin-bottom:8px}
+  .facil .f-ic{font-size:44px;line-height:1}
+  .facil .f-resp{font-size:22px;font-weight:800}
+  .facil .f-sub{font-size:16px;color:var(--texto-2);margin-top:4px}
+  .facil .f-p{font-size:17px;line-height:1.5;margin:8px 0 0}
+  .facil .f-linha{display:flex;gap:10px;align-items:center}
+  .facil.bom,.facil.seco{border-color:#2f9e5b;background:#e9f6ee}
+  .facil.atencao,.facil.talvez{border-color:#e6c229;background:#fdf7dc}
+  .facil.ruim{border-color:#dc3c3d;background:#fdecec}
+  .facil.chuva{border-color:#2a78c8;background:#e6f0fa}
+  .facil-par{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .facil-par .facil{text-align:center;padding:14px 8px}
+  .facil-par .f-resp{font-size:18px}
+  .facil-par .f-pergunta{font-size:16px}
+  .agora-f{display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,#0b6fa4,#1c9ad6);color:#fff}
+  .agora-f.noite{background:linear-gradient(135deg,#1d2b4f,#3a4f86)}
+  .agora-f .f-ic{font-size:72px}
+  .agora-f .f-temp{font-size:64px;font-weight:800;line-height:1}
+  .agora-f .f-txt{font-size:22px;font-weight:700}
+  .agora-f .f-sub{color:rgba(255,255,255,.9)}
+  .f-hortas{display:flex;flex-wrap:wrap;gap:8px}
+  .f-hortas span{background:var(--cartao);border:1px solid var(--linha);border-radius:999px;padding:8px 14px;font-size:17px;font-weight:700}
+  .aviso-mun b{font-size:15px}
+  body.simples .aviso-mun b{font-size:19px}
+  body.simples .aviso-mun small,body.simples .aviso-mun p,body.simples .aviso-mun li{font-size:16px}
+  @media (max-width:820px){
+    .btn-simples{height:44px;padding:0 12px;font-size:13px;margin-left:auto}
+    body.simples .btn-simples{height:44px;font-size:13px}
+    body.simples .painel{max-height:82vh}
+  }
   .rodape{position:fixed;left:12px;bottom:8px;z-index:998;font-size:11px;color:var(--texto-2);background:rgba(255,255,255,.85);padding:4px 8px;border-radius:8px;max-width:calc(100% - 200px)}
   .rodape a{color:var(--azul-escuro)}
   .leaflet-control-attribution{font-size:10px}
@@ -342,6 +398,7 @@
     <input id="busca" type="search" placeholder="Digite sua cidade… ex.: Iturama" autocomplete="off" aria-label="Buscar município">
     <div class="sugestoes" id="sugestoes" role="listbox"></div>
   </div>
+  <button class="btn-simples" id="btnSimples" title="Letras grandes, respostas diretas e leitura em voz alta">🔤 Modo fácil</button>
 </header>
 
 <nav class="trilha" id="trilha"></nav>
@@ -641,6 +698,7 @@ function trocarAba(aba) {
 function desenharAba() {
   const d = estado.climaAtual, linha = estado.selecionado;
   if (!d || !linha) return;
+  if (estado.simples) return desenharSimples(linha, d);
   if (estado.aba === "dias") desenharDias(d);
   else if (estado.aba === "hora") desenharHoras(d);
   else if (estado.aba === "hist") desenharHistorico();
@@ -673,6 +731,7 @@ function desenharAgora(linha, d) {
       <div class="item"><div class="r">🌅 Nascer do sol</div><div class="v">${nascer}</div></div>
       <div class="item"><div class="r">🌇 Pôr do sol</div><div class="v">${por}</div></div>
     </div>
+    ${htmlEnsoMini(estado.estados[linha[2]]?.regiao)}
     <div class="secao">
       <h3>Próximos dias</h3>
       ${resumoSemana(d)}
@@ -1220,8 +1279,10 @@ function desenharCampo(d) {
       </details>
       <p class="nota">⚠️ Orientação geral baseada na previsão do tempo. Sempre siga a <b>bula</b> do produto, use EPI e a <b>receita agronômica</b> (obrigatória para comprar e aplicar defensivos). Produtos diferentes têm exigências diferentes.</p>
     </div>
-    ${htmlSecPlantio()}`;
+    ${htmlSecPlantio()}
+    ${htmlSecEnso(estado.estados[estado.selecionado[2]]?.regiao)}`;
   desenharPlantio();
+  grafOni($("gOni"));
   const det = $("detHora");
   $("pCorpo").querySelector(".semaforo").addEventListener("click", e => {
     const c = e.target.closest(".cel"); if (!c) return;
@@ -1444,6 +1505,123 @@ $("pCorpo").addEventListener("click", e => {
 });
 $("pCorpo").addEventListener("change", e => { if (e.target.id === "plCult") { estado.plCultura = +e.target.value; desenharPlantio(); } });
 
+/* =========================================================
+   ETAPA 7 — El Niño / La Niña + Modo fácil
+   ========================================================= */
+const ENSO_FASE = {
+  elnino: { nome: "El Niño", ic: "🔥", cor: "#d1453b", resumo: "o mar do Pacífico está mais quente que o normal" },
+  lanina: { nome: "La Niña", ic: "❄️", cor: "#2a78c8", resumo: "o mar do Pacífico está mais frio que o normal" },
+  neutro: { nome: "Neutro", ic: "⚖️", cor: "#7d8c99", resumo: "o mar do Pacífico está perto do normal" }
+};
+const ENSO_IMPACTO = {
+  elnino: {
+    Norte: ["Tende a chover menos, principalmente no norte e no leste da Amazônia. Aumenta o risco de seca e de queimadas.", "Cuidado redobrado com fogo: evite queimadas e mantenha aceiros limpos."],
+    Nordeste: ["Tende a chover menos no norte do Nordeste, principalmente na quadra chuvosa (fevereiro a maio). Risco de seca no Semiárido.", "Prefira culturas de ciclo curto e tolerantes à seca, guarde água e forragem."],
+    "Centro-Oeste": ["O efeito é menos definido aqui: costuma deixar o tempo mais quente e a chuva mais irregular.", "No sequeiro, espere as chuvas firmarem antes de plantar e siga a janela do ZARC."],
+    Sudeste: ["O efeito é menos definido aqui: tende a deixar inverno e primavera mais quentes, com chuva irregular.", "No sequeiro, espere as chuvas firmarem antes de plantar e siga a janela do ZARC."],
+    Sul: ["Tende a chover mais que o normal, principalmente na primavera e no inverno. Risco de enchentes e de excesso de umidade na colheita.", "Atenção à drenagem, ao excesso de chuva na colheita do trigo e a doenças de fungo."]
+  },
+  lanina: {
+    Norte: ["Tende a chover mais no norte e no leste da Amazônia.", "Atenção a cheias de rios e a estradas de terra na época da colheita."],
+    Nordeste: ["Tende a chover mais no norte do Nordeste na quadra chuvosa, o que costuma ser bom para o Semiárido.", "Bom ano para aproveitar a quadra chuvosa no plantio de sequeiro; atenção a enxurradas."],
+    "Centro-Oeste": ["O efeito é menos definido aqui: pode atrasar ou deixar irregular o começo das chuvas.", "No sequeiro, espere as chuvas firmarem antes de plantar e siga a janela do ZARC."],
+    Sudeste: ["O efeito é menos definido aqui: pode trazer veranicos (semanas secas no meio da época de chuva).", "Escalone o plantio e fique de olho em veranicos na previsão de 16 dias."],
+    Sul: ["Tende a chover menos, principalmente na primavera e no verão. Risco de estiagem para soja e milho.", "Escalone o plantio, prefira cultivares tolerantes à seca e veja o seguro rural."]
+  },
+  neutro: ["Sem El Niño nem La Niña, o clima depende mais de outros fatores, como o oceano Atlântico e as frentes frias.", "Use a previsão de 16 dias, o histórico do local e a janela do ZARC para planejar."]
+};
+function ensoRegiao(regiao) {
+  const E = estado.enso; if (!E) return null;
+  const f = ENSO_FASE[E.fase] || ENSO_FASE.neutro;
+  const imp = E.fase === "neutro" ? ENSO_IMPACTO.neutro : (ENSO_IMPACTO[E.fase][regiao] || ENSO_IMPACTO.neutro);
+  return { f, imp };
+}
+function htmlEnsoMini(regiao) {
+  const r = ensoRegiao(regiao); if (!r) return "";
+  return `<button class="enso-mini" data-ir-aba="campo" style="--cor-enso:${r.f.cor}"><span>${r.f.ic}</span><span><b>Pacífico: ${esc(estado.enso.rotulo)}</b><small>${r.imp[0]}</small></span></button>`;
+}
+function htmlSecEnso(regiao) {
+  const E = estado.enso, r = ensoRegiao(regiao); if (!r) return "";
+  const u = E.oni_ultimo;
+  return `<div class="secao" id="secEnso">
+    <h3>🌊 El Niño / La Niña</h3>
+    <div class="enso-cab" style="--cor-enso:${r.f.cor}">
+      <div class="enso-ic">${r.f.ic}</div>
+      <div><b>${esc(E.rotulo)}</b><p>Agora ${r.f.resumo}. Último índice oficial (ONI, ${u.rot}/${u.ano}): <b>${u.v > 0 ? "+" : ""}${fmt(u.v, 1)} °C</b>${E.nino34_semana ? `; semana mais recente: ${E.nino34_semana.anomalia > 0 ? "+" : ""}${fmt(E.nino34_semana.anomalia, 1)} °C` : ""}.${E.chance ? ` A NOAA dá cerca de <b>${E.chance}%</b> de chance para o cenário mais provável dos próximos meses.` : ""}</p></div>
+    </div>
+    <div class="enso-reg"><b>O que isso costuma significar na região ${esc(regiao)}:</b><p>${r.imp[0]}</p><p>🌱 <b>No campo:</b> ${r.imp[1]}</p></div>
+    <h3 class="sub-h3">Temperatura do Pacífico (ONI) nos últimos anos</h3>
+    <div class="graf" id="gOni"></div>
+    <div class="sem-leg"><span><i style="background:#d1453b"></i>El Niño (≥ +0,5)</span><span><i style="background:#2a78c8"></i>La Niña (≤ −0,5)</span><span><i style="background:#b9c5cf"></i>Neutro</span></div>
+    <details class="criterios"><summary>O que são El Niño e La Niña</summary><ul>
+      <li><b>El Niño</b> é quando o mar do Pacífico, perto da linha do Equador, fica mais quente que o normal; <b>La Niña</b>, quando fica mais frio. Isso muda os ventos e a chuva em boa parte do mundo, inclusive no Brasil.</li>
+      <li>O índice oficial (ONI) é a diferença de temperatura do mar em relação à média, em trimestres. Passou de +0,5 °C por vários meses, é El Niño; abaixo de −0,5 °C, La Niña.</li>
+      <li>São <b>tendências</b>, não certezas: cada El Niño e cada La Niña é diferente. Use junto com a previsão de 16 dias e o ZARC.</li>
+    </ul></details>
+    <p class="nota">Fonte: NOAA / Climate Prediction Center (EUA). Atualizado em ${esc(E.atualizado)}.</p>
+  </div>`;
+}
+function grafOni(cont) {
+  const E = estado.enso; if (!cont || !E) return;
+  const dados = E.oni.slice(-120);
+  const vals = dados.map(x => x.v), rot = dados.map(x => `${x.rot.slice(0, 3)} ${x.ano}`);
+  const escl = escalaBonita(Math.min(-1, ...vals), Math.max(1, ...vals));
+  const g = baseGrafico(cont, rot, escl, "°C");
+  [.5, -.5].forEach(v => el("line", { x1: g.m.l, x2: g.W - g.m.r, y1: g.y(v), y2: g.y(v), stroke: "#8a9aa8", "stroke-dasharray": "4 3" }, g.svg));
+  const larg = Math.max(1, g.pw / g.n - 1);
+  const barras = vals.map((v, i) => el("rect", { x: g.x(i) - larg / 2, width: larg, y: Math.min(g.y(v), g.y(0)), height: Math.max(.5, Math.abs(g.y(v) - g.y(0))),
+    fill: v >= .5 ? "#d1453b" : v <= -.5 ? "#2a78c8" : "#b9c5cf", class: "g-barra" }, g.svg));
+  let acesa = null;
+  interativo(g, cont, i => {
+    acesa?.classList.remove("acesa"); acesa = barras[i]; acesa.classList.add("acesa");
+    const v = vals[i];
+    posDica(g, cont, g.x(i), [[`${dados[i].rot} ${dados[i].ano}`], [`${v > 0 ? "+" : ""}${fmt(v, 1)} °C`, v >= .5 ? "#d1453b" : v <= -.5 ? "#2a78c8" : "#8a9aa8", true], [v >= .5 ? "El Niño" : v <= -.5 ? "La Niña" : "Neutro"]]);
+  }, () => { acesa?.classList.remove("acesa"); acesa = null; });
+}
+
+/* ---------- Modo fácil ---------- */
+try { estado.simples = localStorage.getItem("raiox_simples") === "1"; } catch (_) { estado.simples = false; }
+function aplicarModo() {
+  document.body.classList.toggle("simples", !!estado.simples);
+  const b = $("btnSimples"); if (b) { b.classList.toggle("ativa", !!estado.simples); b.innerHTML = estado.simples ? "🔤 Modo fácil: ligado" : "🔤 Modo fácil"; }
+  try { localStorage.setItem("raiox_simples", estado.simples ? "1" : "0"); } catch (_) {}
+  if (estado.climaAtual && estado.selecionado) desenharAba();
+}
+$("btnSimples").addEventListener("click", () => { estado.simples = !estado.simples; aplicarModo(); });
+
+function chuvaFacil(prob, mm) {
+  if (prob >= 60 || mm >= 3) return { ic: "🌧️", t: "Sim, deve chover", n: "chuva" };
+  if (prob >= 30 || mm >= .5) return { ic: "🌦️", t: "Talvez chova", n: "talvez" };
+  return { ic: "☀️", t: "Não deve chover", n: "seco" };
+}
+function hortaBoa(linha) {
+  const regiao = estado.estados[linha[2]]?.regiao || "Sudeste", cli = climaProximo(estado.climaAtual);
+  return HORTA.filter(it => avaliarHorta(it, regiao, cli).nivel === "bom");
+}
+function desenharSimples(linha, d) {
+  const c = d.current, dd = d.daily, t = tempo(c.weather_code, c.is_day);
+  const hoje = chuvaFacil(dd.precipitation_probability_max[0] ?? 0, dd.precipitation_sum[0] || 0);
+  const amanha = chuvaFacil(dd.precipitation_probability_max[1] ?? 0, dd.precipitation_sum[1] || 0);
+  let F = null; try { F = fraseJanela(analisarPulverizacao(d), d.hourly, d); } catch (_) {}
+  const boas = hortaBoa(linha);
+  const r = ensoRegiao(estado.estados[linha[2]]?.regiao);
+  $("pCorpo").innerHTML = `
+    <button class="facil-ouvir" id="btnOuvirFacil">🔊 Ouvir tudo</button>
+    ${htmlAvisosMunicipio(linha[0])}
+    <div class="facil agora-f ${c.is_day ? "" : "noite"}"><div class="f-ic">${t.icone}</div><div><div class="f-temp">${fmt(c.temperature_2m)}°</div><div class="f-txt">${t.texto}</div><div class="f-sub">Hoje: de ${fmt(dd.temperature_2m_min[0])}° a ${fmt(dd.temperature_2m_max[0])}°</div></div></div>
+    <div class="facil-par">
+      <div class="facil ${hoje.n}"><div class="f-pergunta">Vai chover hoje?</div><div class="f-ic">${hoje.ic}</div><div class="f-resp">${hoje.t}</div><div class="f-sub">chance de ${dd.precipitation_probability_max[0] ?? 0}%</div></div>
+      <div class="facil ${amanha.n}"><div class="f-pergunta">E amanhã?</div><div class="f-ic">${amanha.ic}</div><div class="f-resp">${amanha.t}</div><div class="f-sub">chance de ${dd.precipitation_probability_max[1] ?? 0}%</div></div>
+    </div>
+    ${F ? `<div class="facil ${F.nivel}"><div class="f-pergunta">Pode passar veneno (defensivo) hoje?</div><div class="f-linha"><span class="f-ic">${F.nivel === "bom" ? "🟢" : F.nivel === "atencao" ? "🟡" : "🔴"}</span><span class="f-resp">${F.titulo}</span></div><p class="f-p">${F.texto}</p></div>` : ""}
+    <div class="facil horta-f"><div class="f-pergunta">O que plantar agora na horta?</div>
+      ${boas.length ? `<div class="f-hortas">${boas.slice(0, 8).map(h => `<span>${h.ic} ${h.nome}</span>`).join("")}</div>` : `<p class="f-p">Este mês está difícil para a horta aqui. Veja os detalhes no modo completo.</p>`}</div>
+    ${r ? `<div class="facil"><div class="f-pergunta">Como vai ser o ano?</div><div class="f-linha"><span class="f-ic">${r.f.ic}</span><span class="f-resp">${esc(estado.enso.rotulo)}</span></div><p class="f-p">${r.imp[0]}</p></div>` : ""}
+    <button class="facil-sair" id="btnSairFacil">Ver tudo (modo completo)</button>`;
+  $("btnOuvirFacil").onclick = () => $("btnOuvir").click();
+  $("btnSairFacil").onclick = () => { estado.simples = false; aplicarModo(); };
+}
+
 /* ---------- Fala (botão Ouvir) ---------- */
 function montarFala(linha, d) {
   const c = d.current, dd = d.daily, t = tempo(c.weather_code, c.is_day), dir = direcao(c.wind_direction_10m);
@@ -1453,6 +1631,8 @@ function montarFala(linha, d) {
     `Umidade do ar ${fmt(c.relative_humidity_2m)} por cento. Vento de ${fmt(c.wind_speed_10m)} quilômetros por hora, vindo do ${DIRS[dir]}. ` +
     `Amanhã: ${ta.texto}, de ${fmt(dd.temperature_2m_min[1])} a ${fmt(dd.temperature_2m_max[1])} graus, chance de chuva de ${dd.precipitation_probability_max[1] ?? 0} por cento.` +
     avisosDoMunicipio(linha[0]).map(a => ` Atenção: aviso do INMET de ${a.evento}, grau ${a.severidade}.`).join("") +
+    (() => { try { const b = hortaBoa(linha); return b.length ? ` Na horta, boa época para: ${b.slice(0, 6).map(h => h.nome).join(", ")}.` : ""; } catch (_) { return ""; } })() +
+    (() => { try { const r = ensoRegiao(estado.estados[linha[2]]?.regiao); return r ? ` No oceano Pacífico: ${estado.enso.rotulo}. ${r.imp[0]}` : ""; } catch (_) { return ""; } })() +
     (() => { try { const F = fraseJanela(analisarPulverizacao(d), d.hourly, d); return ` Pulverização: ${F.titulo}. ${F.texto.replace(/<[^>]+>/g, "")}`; } catch (_) { return ""; } })();
 }
 
@@ -1875,11 +2055,13 @@ mapa.on("click", e => mostrarValorPonto(e.latlng));
     mapa.fitBounds(camadaUF.getBounds(), { padding: [20, 20] });
 
     // camadas e avisos (se falharem, o resto do site segue funcionando)
-    const [grade, avisos] = await Promise.all([
+    const [grade, avisos, enso] = await Promise.all([
       carregarJSON("dados/camadas.json").catch(() => null),
-      carregarJSON("dados/avisos.json").catch(() => null)
+      carregarJSON("dados/avisos.json").catch(() => null),
+      carregarJSON("dados/enso.json").catch(() => null)
     ]);
-    estado.grade = grade; estado.avisos = avisos;
+    estado.grade = grade; estado.avisos = avisos; estado.enso = enso;
+    aplicarModo();
     estado.cartaoAberto = window.innerWidth > 820;
     desenharCartaoCamadas(); desenharAvisosMapa();
 

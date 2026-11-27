@@ -20,6 +20,7 @@ O projeto usa um **modelo híbrido**, porque baixar o Brasil inteiro desde 1940 
 | Camadas do mapa | 🤖 Robô diário (Python) | Grade de 812 pontos (~110 km) com últimos 60 dias + previsão; o navegador suaviza e recorta no contorno do Brasil |
 | Avisos do INMET | 🤖 Robô diário (Python) | Avisos em vigor com área, gravidade, riscos e orientações, ligados aos municípios pelo código IBGE |
 | Janelas de plantio (ZARC) | 🤖 Robô mensal (Python) | Lê ~840 MB da Tábua de Risco do MAPA (safra atual, anterior e perenes/olerícolas) e resume por município, cultura, manejo e solo em `dados/zarc/` |
+| El Niño / La Niña | 🤖 Robô diário (Python) | ONI, Niño 3.4 semanal e situação oficial da NOAA/CPC em `dados/enso.json` |
 | Histórico desde 1940 | 🌐 O navegador da própria pessoa | Baixa a reanálise ERA5 só quando a aba Histórico é aberta e calcula tudo ali mesmo (normal 1991–2020, recordes, tendência) |
 
 Assim o site mostra "todos os dados" de qualquer ponto do país sem guardar terabytes, e cada visitante usa o próprio limite da API.
@@ -32,7 +33,7 @@ Assim o site mostra "todos os dados" de qualquer ponto do país sem guardar tera
 - [x] **Etapa 4**: camadas coloridas no mapa do Brasil (chuva 7 e 30 dias, previsão 7 dias, temperatura máxima, umidade mínima, dias sem chuva, risco de fogo) + avisos oficiais do INMET no mapa e no painel do município
 - [x] **Etapa 5**: janela de pulverização hora a hora (aba 🌱 Campo): semáforo de 7 dias × 24 horas com vento na barra, chuva, temperatura, umidade e Delta T, resposta direta "pode aplicar hoje?" e próxima janela boa
 - [x] **Etapa 6**: plantio e colheita (aba 🌱 Campo): janelas oficiais do ZARC para 92 culturas em todos os municípios zoneados, por manejo (sequeiro/irrigado) e tipo de solo, com "pode plantar agora?", próxima janela e colheita estimada; guia de 15 hortaliças por região com checagem do clima previsto
-- [ ] **Etapa 7**: El Niño / La Niña + modo simples com voz
+- [x] **Etapa 7**: El Niño / La Niña (situação oficial da NOAA, intensidade, gráfico do ONI e o que costuma significar em cada região, com dica para o campo) + 🔤 Modo fácil: letras grandes, perguntas e respostas diretas (vai chover? pode passar veneno? o que plantar?) e "Ouvir tudo"
 - [ ] **Etapa 8**: revisão geral e vídeo
 
 ## Estrutura
@@ -44,6 +45,7 @@ src/etapa1_mapas.py              → baixa as malhas e a lista de municípios do
 src/etapa4_camadas.py            → grade de pontos e camadas do mapa (todo dia)
 src/etapa4_avisos.py             → avisos oficiais do INMET (todo dia)
 src/etapa6_zarc.py               → janelas de plantio do ZARC (todo mês)
+src/etapa7_enso.py               → El Niño / La Niña pela NOAA (todo dia)
 dados/
   municipios.json                → 5.570 municípios com ponto central (busca e localização)
   mapas/brasil-estados.json      → contorno dos estados
@@ -58,6 +60,7 @@ dados/
 
 - **IBGE**: malhas territoriais e lista de municípios (API de serviços de dados)
 - **MAPA / Embrapa**: Zoneamento Agrícola de Risco Climático (Tábua de risco, dados abertos) e recomendações da Embrapa Hortaliças
+- **NOAA / CPC**: índice ONI, Niño 3.4 e situação oficial do El Niño / La Niña
 - **INMET**: avisos meteorológicos oficiais (API pública de avisos)
 - **Open-Meteo**: clima atual, previsão e histórico (licença CC BY 4.0, uso não comercial)
 - Mapas de fundo: © OpenStreetMap, © CARTO, Esri, OpenTopoMap

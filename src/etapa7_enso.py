@@ -9,6 +9,7 @@ Busca na NOAA (Centro de Previsão do Clima dos EUA, a referência mundial):
 Saída: dados/enso.json
 """
 
+import html as htmllib
 import json
 import re
 from datetime import datetime, timedelta, timezone
@@ -67,9 +68,9 @@ def main():
     # 3) situação oficial e chances
     try:
         html = baixar(DISCUSSAO)
-        texto = re.sub(r"<[^>]+>", " ", html)
+        texto = htmllib.unescape(re.sub(r"<[^>]+>", " ", html)).replace("\xa0", " ")
         texto = re.sub(r"\s+", " ", texto)
-        m = re.search(r"ENSO Alert System Status:\s*([^.:]+?)(?:\s{0,3}(?:Synopsis|$))", texto)
+        m = re.search(r"ENSO Alert System Status:\s*(.+?)\s*Synopsis", texto)
         status = (m.group(1).strip() if m else "").strip()
         chave = status.lower().replace("nina", "niña").replace("nino", "niño")
         fase, rotulo = next((v for k, v in STATUS_PT.items() if chave.startswith(k)), ("neutro", status or "—"))
@@ -92,6 +93,17 @@ def main():
         v = oni[-1]["v"]
         saida["fase"] = "elnino" if v >= 0.5 else "lanina" if v <= -0.5 else "neutro"
         saida["rotulo"] = {"elnino": "Condições de El Niño", "lanina": "Condições de La Niña", "neutro": "Neutro"}[saida["fase"]]
+
+    # intensidade pelo ONI mais recente (faixas usadas pela NOAA)
+    v = abs(oni[-1]["v"])
+    if saida["fase"] != "neutro" and v >= 0.5:
+        intens = "fraco" if v < 1 else "moderado" if v < 1.5 else "forte" if v < 2 else "muito forte"
+        if saida["fase"] == "lanina":
+            intens = intens.replace("fraco", "fraca").replace("moderado", "moderada")
+        saida["intensidade"] = intens
+        nome = "El Niño" if saida["fase"] == "elnino" else "La Niña"
+        if saida["rotulo"].endswith("em andamento"):
+            saida["rotulo"] = f"{nome} {intens} em andamento"
 
     saida["atualizado"] = datetime.now(timezone(timedelta(hours=-3))).strftime("%Y-%m-%d %H:%M")
     SAIDA.write_text(json.dumps(saida, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
