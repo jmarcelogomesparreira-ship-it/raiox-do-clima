@@ -1,4 +1,4 @@
-name: Etapa 4 — camadas do mapa e avisos do INMET
+name: Etapas 4 e 7 — camadas do mapa, avisos do INMET e El Niño
 
 # Todo dia de manhã (06:17 de Brasília) e na mão pela aba Actions.
 on:
@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - "src/etapa4_*.py"
+      - "src/etapa7_*.py"
       - ".github/workflows/atualizar-camadas.yml"
 
 permissions:
@@ -35,6 +36,10 @@ jobs:
       - name: Avisos do INMET
         continue-on-error: true
         run: python src/etapa4_avisos.py
+
+      - name: El Niño / La Niña (NOAA)
+        continue-on-error: true
+        run: python src/etapa7_enso.py
 
       - name: Camadas do mapa (grade de pontos)
         run: python src/etapa4_camadas.py
