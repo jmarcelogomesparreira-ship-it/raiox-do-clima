@@ -1,0 +1,54 @@
+name: Etapa 4 — camadas do mapa e avisos do INMET
+
+# Todo dia de manhã (06:17 de Brasília) e na mão pela aba Actions.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 9 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "src/etapa4_*.py"
+      - ".github/workflows/atualizar-camadas.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-camadas
+  cancel-in-progress: false
+
+jobs:
+  camadas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar bibliotecas
+        run: pip install requests shapely
+
+      - name: Avisos do INMET
+        continue-on-error: true
+        run: python src/etapa4_avisos.py
+
+      - name: Camadas do mapa (grade de pontos)
+        run: python src/etapa4_camadas.py
+
+      - name: Salvar no repositório
+        if: always()
+        run: |
+          git config user.name "robo-do-clima"
+          git config user.email "actions@github.com"
+          git add dados/
+          if git diff --cached --quiet; then
+            echo "Nada mudou."
+          else
+            git commit -m "Camadas e avisos atualizados"
+            git pull --rebase origin main
+            git push
+          fi
