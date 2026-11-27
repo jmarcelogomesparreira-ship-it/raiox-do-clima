@@ -7,6 +7,28 @@ Chuva, temperatura, umidade, vento e sol, com histórico desde 1940, previsão, 
 
 Faz parte da série de projetos de dados públicos, ao lado do [Raio-X da Cana](https://github.com/jmarcelogomesparreira-ship-it/raiox-da-cana).
 
+![Mapa do Brasil com a camada de risco de fogo e os avisos do INMET](docs/prints/mapa-camadas.jpg)
+
+| Clima de agora, com aviso do INMET | Previsão de 16 dias |
+|---|---|
+| ![Painel do município](docs/prints/municipio-agora.jpg) | ![Previsão de 16 dias](docs/prints/previsao-16-dias.jpg) |
+| **Janela de pulverização hora a hora** | **Janela de plantio oficial (ZARC)** |
+| ![Semáforo de pulverização](docs/prints/pulverizacao.jpg) | ![Plantio pelo ZARC](docs/prints/plantio-zarc.jpg) |
+| **Histórico desde 1940 e listras do clima** | **Modo fácil no celular** |
+| ![Histórico](docs/prints/historico.jpg) | <img src="docs/prints/modo-facil-celular.jpg" alt="Modo fácil" width="260"> |
+
+## O que dá para fazer
+
+- 🗺️ **Mapa do Brasil inteiro**: zoom por estado e município, busca sem acento, "usar minha localização" e camadas coloridas (chuva, previsão, calor, umidade, dias sem chuva, risco de fogo)
+- ☀️ **Clima de agora** de qualquer município, com avisos oficiais do INMET no topo
+- 📅 **Previsão de 16 dias** e **hora a hora**, com gráficos interativos
+- 📈 **Histórico desde 1940**: chuva recente contra a média 1991–2020, ano escolhido × média, listras do clima, tendência, recordes e tabela mês a mês
+- 🚜 **Janela de pulverização**: semáforo de 7 dias × 24 horas (vento, chuva, umidade, temperatura e Delta T)
+- 🌱 **Plantio e colheita**: janelas oficiais do ZARC para 92 culturas e guia de 15 hortaliças por região
+- 🌊 **El Niño / La Niña**: situação oficial da NOAA e o que costuma significar em cada região
+- 🔤 **Modo fácil**: letra grande, perguntas diretas e leitura em voz alta
+- 📲 Funciona no celular e pode ser **instalado como app** (menu do navegador → "Adicionar à tela inicial")
+
 ---
 
 ## Como funciona
