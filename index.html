@@ -877,17 +877,44 @@ function isoHoje(menosDias = 0) {
 async function buscarHistorico() {
   const linha = estado.selecionado; if (!linha) return;
   const { lat, lon } = estado.local;
-  const chave = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+  const chave = `${lat.toFixed(2)},${lon.toFixed(2)}`;
   if (cacheHist.has(chave)) return cacheHist.get(chave);
-  const vars = ["temperature_2m_max","temperature_2m_min","temperature_2m_mean","precipitation_sum","wind_gusts_10m_max","sunshine_duration","et0_fao_evapotranspiration","relative_humidity_2m_mean"];
-  const pedir = v => carregarJSON("https://archive-api.open-meteo.com/v1/archive?" + new URLSearchParams({
-    latitude: lat, longitude: lon, timezone: "auto", start_date: "1940-01-01", end_date: isoHoje(2), daily: v.join(",")
-  }));
-  let d;
-  try { d = await pedir(vars); }
-  catch (e) { d = await pedir(vars.filter(v => v !== "relative_humidity_2m_mean")); } // se a umidade não vier, segue sem ela
-  const H = processarHistorico(d.daily);
+  // 1) guardado no aparelho (vale por 1 dia): abre na hora e não gasta a API
+  try {
+    const g = JSON.parse(localStorage.getItem("raiox_hist_v2_" + chave) || "null");
+    if (g && g.dia === isoHoje(0)) { cacheHist.set(chave, g.H); return g.H; }
+  } catch (_) {}
+  let H = null;
+  // 2) Open-Meteo / ERA5 desde 1940 (o mais completo, mas tem limite de uso)
+  try {
+    const d = await carregarJSON("https://archive-api.open-meteo.com/v1/archive?" + new URLSearchParams({
+      latitude: lat, longitude: lon, timezone: "auto", start_date: "1940-01-01", end_date: isoHoje(2),
+      daily: "temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,wind_gusts_10m_max"
+    }));
+    H = processarHistorico(d.daily); H.fonte = "era5";
+  } catch (e) {
+    // 3) plano B: NASA POWER desde 1981 (sem limite fixo de uso)
+    estado.histPlanoB = true;
+    const msg = $("pCorpo").querySelector(".carregando div:last-child");
+    if (msg) msg.innerHTML = "O servidor principal está ocupado.<br><small>Buscando na NASA (desde 1981)…</small>";
+    const ano = new Date().getFullYear();
+    const r = await carregarJSON("https://power.larc.nasa.gov/api/temporal/daily/point?" + new URLSearchParams({
+      parameters: "T2M,T2M_MAX,T2M_MIN,PRECTOTCORR,WS10M_MAX", community: "AG",
+      latitude: lat.toFixed(3), longitude: lon.toFixed(3), start: "19810101", end: `${ano}${isoHoje(1).slice(5, 7)}${isoHoje(1).slice(8, 10)}`, format: "JSON"
+    }));
+    const P = r.properties.parameter, datas = Object.keys(P.T2M).sort();
+    const val = (k, dt, f = 1) => { const v = P[k]?.[dt]; return v == null || v <= -900 ? null : +(v * f).toFixed(1); };
+    H = processarHistorico({
+      time: datas.map(x => `${x.slice(0, 4)}-${x.slice(4, 6)}-${x.slice(6, 8)}`),
+      temperature_2m_mean: datas.map(x => val("T2M", x)), temperature_2m_max: datas.map(x => val("T2M_MAX", x)),
+      temperature_2m_min: datas.map(x => val("T2M_MIN", x)), precipitation_sum: datas.map(x => val("PRECTOTCORR", x)),
+      wind_gusts_10m_max: datas.map(x => val("WS10M_MAX", x, 3.6))
+    });
+    H.fonte = "nasa";
+  }
   cacheHist.set(chave, H);
+  try { localStorage.setItem("raiox_hist_v2_" + chave, JSON.stringify({ dia: isoHoje(0), H })); }
+  catch (_) { try { Object.keys(localStorage).filter(k => k.startsWith("raiox_hist_")).forEach(k => localStorage.removeItem(k)); } catch (__) {} }
   return H;
 }
 
@@ -974,7 +1001,8 @@ async function desenharHistorico() {
   try { H = await buscarHistorico(); }
   catch (e) {
     if (estado.selecionado === linha && estado.aba === "hist")
-      $("pCorpo").innerHTML = `<div class="erro">Não consegui buscar o histórico agora (o servidor pode estar ocupado). Tente de novo em alguns minutos.</div>`;
+      $("pCorpo").innerHTML = `<div class="erro">Os dois servidores de histórico (Open-Meteo e NASA) não responderam agora. Isso costuma passar em poucos minutos.</div><button class="link-aba" id="btnTentarHist">🔄 Tentar de novo</button>`;
+    $("btnTentarHist")?.addEventListener("click", desenharHistorico);
     return;
   }
   if (estado.selecionado !== linha || estado.aba !== "hist") return;
@@ -1044,7 +1072,7 @@ async function desenharHistorico() {
         <div><span>☀️ Maior seca seguida</span><b>${H.rec.seca[0]} dias</b><small>${fData(H.rec.seca[1])} a ${fData(H.rec.seca[2])}</small></div>
         <div><span>☔ Ano mais chuvoso</span><b>${fmt(H.anoMaisChuvoso.chuva)} mm</b><small>${H.anoMaisChuvoso.ano}</small></div>
         <div><span>🏜️ Ano mais seco</span><b>${fmt(H.anoMaisSeco.chuva)} mm</b><small>${H.anoMaisSeco.ano}</small></div>
-        ${H.rec.rajada[0] ? `<div><span>🌪️ Rajada mais forte</span><b>${fmt(H.rec.rajada[0])} km/h</b><small>${fData(H.rec.rajada[1])}</small></div>` : ""}
+        ${H.rec.rajada[0] ? `<div><span>🌪️ ${H.fonte === "nasa" ? "Vento mais forte" : "Rajada mais forte"}</span><b>${fmt(H.rec.rajada[0])} km/h</b><small>${fData(H.rec.rajada[1])}</small></div>` : ""}
       </div>
     </div>
 
@@ -1056,7 +1084,9 @@ async function desenharHistorico() {
         <tr class="tot"><td>Ano</td><td>${fmt(H.normalAnoChuva)} mm</td><td>${fmt(H.normal.reduce((s, x) => s + x.diasChuva, 0))}</td><td colspan="2">média ${fmt(H.normalAnoT, 1)}°</td></tr></tbody>
       </table></div>
     </div>
-    <p class="nota">Histórico da reanálise ERA5 (Copernicus/ECMWF), via Open-Meteo: é um modelo que reconstrói o clima numa grade de cerca de 25 km, não a leitura de um pluviômetro na sua propriedade. Serve muito bem para comparar anos e ver tendências.</p>`;
+    <p class="nota">${H.fonte === "nasa"
+      ? "Histórico da NASA POWER (reanálise MERRA-2, desde 1981, grade de cerca de 50 km). Usado porque o servidor principal estava ocupado; amanhã o Raio-X tenta de novo a série desde 1940."
+      : "Histórico da reanálise ERA5 (Copernicus/ECMWF), via Open-Meteo: é um modelo que reconstrói o clima numa grade de cerca de 25 km, não a leitura de um pluviômetro na sua propriedade."} Serve muito bem para comparar anos e ver tendências. Fica guardado no seu aparelho por 1 dia.</p>`;
 
   desenharAnoEscolhido(H);
   $("selAno").addEventListener("change", e => { estado.anoComp = +e.target.value; desenharAnoEscolhido(H); });

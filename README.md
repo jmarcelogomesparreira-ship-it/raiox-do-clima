@@ -21,7 +21,7 @@ O projeto usa um **modelo híbrido**, porque baixar o Brasil inteiro desde 1940 
 | Avisos do INMET | 🤖 Robô diário (Python) | Avisos em vigor com área, gravidade, riscos e orientações, ligados aos municípios pelo código IBGE |
 | Janelas de plantio (ZARC) | 🤖 Robô mensal (Python) | Lê ~840 MB da Tábua de Risco do MAPA (safra atual, anterior e perenes/olerícolas) e resume por município, cultura, manejo e solo em `dados/zarc/` |
 | El Niño / La Niña | 🤖 Robô diário (Python) | ONI, Niño 3.4 semanal e situação oficial da NOAA/CPC em `dados/enso.json` |
-| Histórico desde 1940 | 🌐 O navegador da própria pessoa | Baixa a reanálise ERA5 só quando a aba Histórico é aberta e calcula tudo ali mesmo (normal 1991–2020, recordes, tendência) |
+| Histórico desde 1940 | 🌐 O navegador da própria pessoa | Baixa a reanálise ERA5 (Open-Meteo) só quando a aba Histórico é aberta e calcula tudo ali mesmo (normal 1991–2020, recordes, tendência). Se a Open-Meteo estiver no limite de uso, cai automaticamente para a NASA POWER (desde 1981). O resultado fica guardado no aparelho por 1 dia |
 
 Assim o site mostra "todos os dados" de qualquer ponto do país sem guardar terabytes, e cada visitante usa o próprio limite da API.
 
@@ -62,6 +62,7 @@ dados/
 - **MAPA / Embrapa**: Zoneamento Agrícola de Risco Climático (Tábua de risco, dados abertos) e recomendações da Embrapa Hortaliças
 - **NOAA / CPC**: índice ONI, Niño 3.4 e situação oficial do El Niño / La Niña
 - **INMET**: avisos meteorológicos oficiais (API pública de avisos)
+- **NASA POWER**: histórico diário desde 1981 (plano B do histórico)
 - **Open-Meteo**: clima atual, previsão e histórico (licença CC BY 4.0, uso não comercial)
 - Mapas de fundo: © OpenStreetMap, © CARTO, Esri, OpenTopoMap
 
