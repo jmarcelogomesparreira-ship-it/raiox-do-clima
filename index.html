@@ -156,6 +156,35 @@
   .g-dica b{color:var(--texto);font-size:13.5px}
   .g-dica .g-dica-tit{font-weight:600;color:var(--texto);margin-bottom:3px}
   .g-dica i{width:12px;height:2.5px;border-radius:2px;display:inline-block}
+
+  /* ===== Etapa 3: histórico ===== */
+  .kpi .k-sub{font-size:12px;color:var(--texto-2);margin-top:4px;line-height:1.4}
+  .kpi{border-left:4px solid transparent}
+  .kpi.seco{border-left-color:#e08a1e}
+  .kpi.umido{border-left-color:#2a78c8}
+  .kpi.ok{border-left-color:#2f9e5b}
+  .sel-ano{display:inline-flex;gap:8px;align-items:center;font-size:14px;font-weight:600;margin-bottom:8px}
+  .sel-ano select{font:inherit;font-size:15px;padding:7px 10px;border-radius:10px;border:1px solid var(--linha);background:var(--cartao)}
+  .g-legenda i.caixa{width:10px;height:10px;border-radius:3px}
+  .listras{position:relative;display:flex;height:64px;border-radius:10px;overflow:visible;cursor:crosshair}
+  .listras > i{flex:1;display:block;height:100%}
+  .listras > i:first-child{border-radius:10px 0 0 10px}
+  .listras > i:nth-last-child(2){border-radius:0 10px 10px 0}
+  .listras .g-dica{top:70px}
+  .listras-leg{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--texto-2);margin:6px 0 10px;gap:8px}
+  .listras-leg .esc{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:center}
+  .listras-leg .esc i{width:10px;height:10px;border-radius:3px;display:inline-block;border:1px solid var(--linha)}
+  .recordes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .recordes div{background:var(--fundo);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+  .recordes span{font-size:12px;color:var(--texto-2);font-weight:600}
+  .recordes b{font-size:18px}
+  .recordes small{font-size:12px;color:var(--texto-2)}
+  .tabela-wrap{overflow-x:auto}
+  .tabela{width:100%;border-collapse:collapse;font-size:13.5px}
+  .tabela th{text-align:right;font-size:11.5px;color:var(--texto-2);font-weight:600;padding:6px 6px;border-bottom:1px solid var(--linha)}
+  .tabela td{text-align:right;padding:7px 6px;border-bottom:1px solid var(--linha);font-variant-numeric:tabular-nums}
+  .tabela th:first-child,.tabela td:first-child{text-align:left;font-weight:600}
+  .tabela tr.tot td{font-weight:700;border-bottom:0}
   .rodape{position:fixed;left:12px;bottom:8px;z-index:998;font-size:11px;color:var(--texto-2);background:rgba(255,255,255,.85);padding:4px 8px;border-radius:8px;max-width:calc(100% - 200px)}
   .rodape a{color:var(--azul-escuro)}
   .leaflet-control-attribution{font-size:10px}
@@ -230,6 +259,7 @@
       <button data-aba="agora" class="ativa">☀️ Agora</button>
       <button data-aba="dias">📅 16 dias</button>
       <button data-aba="hora">🕐 Hora a hora</button>
+      <button data-aba="hist">📈 Histórico</button>
     </nav>
   </div>
   <div class="painel-corpo" id="pCorpo"></div>
@@ -494,6 +524,7 @@ function desenharAba() {
   if (!d || !linha) return;
   if (estado.aba === "dias") desenharDias(d);
   else if (estado.aba === "hora") desenharHoras(d);
+  else if (estado.aba === "hist") desenharHistorico();
   else desenharAgora(linha, d);
 }
 
@@ -647,6 +678,302 @@ $("pCorpo").addEventListener("click", e => {
   if (dia) { estado.diaHora = +dia.dataset.dia; trocarAba("hora"); }
 });
 
+/* =========================================================
+   ETAPA 3 — Histórico desde 1940 e comparação com a média
+   Fonte: Open-Meteo Historical (reanálise ERA5), buscada
+   pelo navegador só quando a pessoa abre a aba.
+   Normal climatológica: 1991–2020 (padrão da OMM).
+   ========================================================= */
+const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const MESES_LONGO = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+const NORMAL_INI = 1991, NORMAL_FIM = 2020;
+const COR_MEDIA = "#9aa8b4";
+const cacheHist = new Map();
+
+function isoHoje(menosDias = 0) {
+  const d = new Date(); d.setDate(d.getDate() - menosDias);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+async function buscarHistorico() {
+  const linha = estado.selecionado; if (!linha) return;
+  const { lat, lon } = estado.local;
+  const chave = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+  if (cacheHist.has(chave)) return cacheHist.get(chave);
+  const vars = ["temperature_2m_max","temperature_2m_min","temperature_2m_mean","precipitation_sum","wind_gusts_10m_max","sunshine_duration","et0_fao_evapotranspiration","relative_humidity_2m_mean"];
+  const pedir = v => carregarJSON("https://archive-api.open-meteo.com/v1/archive?" + new URLSearchParams({
+    latitude: lat, longitude: lon, timezone: "auto", start_date: "1940-01-01", end_date: isoHoje(2), daily: v.join(",")
+  }));
+  let d;
+  try { d = await pedir(vars); }
+  catch (e) { d = await pedir(vars.filter(v => v !== "relative_humidity_2m_mean")); } // se a umidade não vier, segue sem ela
+  const H = processarHistorico(d.daily);
+  cacheHist.set(chave, H);
+  return H;
+}
+
+/* ---------- Contas ---------- */
+function processarHistorico(dd) {
+  const n = dd.time.length;
+  const t = dd.time, chuva = dd.precipitation_sum, tmed = dd.temperature_2m_mean, tmax = dd.temperature_2m_max, tmin = dd.temperature_2m_min;
+  // corta o fim que ainda vem vazio (os últimos dias demoram a chegar)
+  let ult = n - 1; while (ult > 0 && (chuva[ult] == null || tmed[ult] == null)) ult--;
+  const anos = {}; // ano -> {m: [12 meses], chuva, tSoma, tN, diasChuva}
+  const novoMes = () => ({ chuva: 0, tSoma: 0, tN: 0, maxSoma: 0, minSoma: 0, diasChuva: 0, dias: 0 });
+  const porDiaAno = {}; // "MM-DD" -> {chuva, t, n} só nos anos da normal
+  for (let i = 0; i <= ult; i++) {
+    if (chuva[i] == null || tmed[i] == null) continue;
+    const a = +t[i].slice(0, 4), m = +t[i].slice(5, 7) - 1;
+    const A = anos[a] ??= { m: Array.from({ length: 12 }, novoMes), dias: 0 };
+    const M = A.m[m];
+    M.chuva += chuva[i]; M.tSoma += tmed[i]; M.tN++; M.maxSoma += tmax[i]; M.minSoma += tmin[i]; M.dias++;
+    if (chuva[i] >= DIA_CHUVA) M.diasChuva++;
+    A.dias++;
+    if (a >= NORMAL_INI && a <= NORMAL_FIM) {
+      const k = t[i].slice(5, 10), P = porDiaAno[k] ??= { chuva: 0, t: 0, n: 0 };
+      P.chuva += chuva[i]; P.t += tmed[i]; P.n++;
+    }
+  }
+  // normal mensal 1991–2020
+  const normal = MESES.map((_, m) => {
+    let c = 0, tt = 0, mx = 0, mn = 0, dc = 0, k = 0;
+    for (let a = NORMAL_INI; a <= NORMAL_FIM; a++) {
+      const M = anos[a]?.m[m]; if (!M || !M.tN) continue;
+      c += M.chuva; tt += M.tSoma / M.tN; mx += M.maxSoma / M.tN; mn += M.minSoma / M.tN; dc += M.diasChuva; k++;
+    }
+    return { chuva: c / k, t: tt / k, max: mx / k, min: mn / k, diasChuva: dc / k };
+  });
+  const normalAnoChuva = normal.reduce((s, x) => s + x.chuva, 0);
+  const normalAnoT = normal.reduce((s, x) => s + x.t, 0) / 12;
+  // anos completos
+  const anoAtual = +t[ult].slice(0, 4);
+  const listaAnos = Object.keys(anos).map(Number).sort((x, y) => x - y);
+  const completos = listaAnos.filter(a => a < anoAtual && anos[a].dias >= 360);
+  const anual = completos.map(a => {
+    const ms = anos[a].m;
+    return { ano: a, chuva: ms.reduce((s, M) => s + M.chuva, 0), t: ms.reduce((s, M) => s + M.tSoma, 0) / ms.reduce((s, M) => s + M.tN, 0) };
+  });
+  // tendência da temperatura (regressão linear simples)
+  const mx = anual.reduce((s, x) => s + x.ano, 0) / anual.length, my = anual.reduce((s, x) => s + x.t, 0) / anual.length;
+  const incl = anual.reduce((s, x) => s + (x.ano - mx) * (x.t - my), 0) / anual.reduce((s, x) => s + (x.ano - mx) ** 2, 0);
+  // últimos 30 e 90 dias contra a normal dos mesmos dias do calendário
+  const janela = dias => {
+    let c = 0, cn = 0, tt = 0, tn = 0, k = 0;
+    for (let i = ult; i >= 0 && k < dias; i--) {
+      if (chuva[i] == null) continue;
+      const P = porDiaAno[t[i].slice(5, 10)];
+      c += chuva[i]; tt += tmed[i]; k++;
+      if (P) { cn += P.chuva / P.n; tn += P.t / P.n; }
+    }
+    return { chuva: c, chuvaNormal: cn, t: tt / k, tNormal: tn / k, dias: k };
+  };
+  // recordes e sequência seca
+  const rec = { quente: [-99, ""], frio: [99, ""], chuva: [0, ""], rajada: [0, ""], seca: [0, "", ""] };
+  let seq = 0, iniSeq = "";
+  for (let i = 0; i <= ult; i++) {
+    if (tmax[i] != null && tmax[i] > rec.quente[0]) rec.quente = [tmax[i], t[i]];
+    if (tmin[i] != null && tmin[i] < rec.frio[0]) rec.frio = [tmin[i], t[i]];
+    if (chuva[i] != null && chuva[i] > rec.chuva[0]) rec.chuva = [chuva[i], t[i]];
+    const g = dd.wind_gusts_10m_max?.[i]; if (g != null && g > rec.rajada[0]) rec.rajada = [g, t[i]];
+    if (chuva[i] != null && chuva[i] < DIA_CHUVA) { if (!seq) iniSeq = t[i]; seq++; if (seq > rec.seca[0]) rec.seca = [seq, iniSeq, t[i]]; }
+    else seq = 0;
+  }
+  const anoMaisChuvoso = anual.reduce((a, b) => b.chuva > a.chuva ? b : a), anoMaisSeco = anual.reduce((a, b) => b.chuva < a.chuva ? b : a);
+  const anoMaisQuente = anual.reduce((a, b) => b.t > a.t ? b : a);
+  return {
+    anos, normal, normalAnoChuva, normalAnoT, anual, anoAtual, ultimoDia: t[ult], primeiroAno: listaAnos[0],
+    tendencia: incl * 10, j30: janela(30), j90: janela(90), rec, seqAtual: seq, iniSeqAtual: iniSeq,
+    anoMaisChuvoso, anoMaisSeco, anoMaisQuente, temUmidade: !!dd.relative_humidity_2m_mean
+  };
+}
+
+/* ---------- Aba: Histórico ---------- */
+async function desenharHistorico() {
+  const linha = estado.selecionado;
+  $("pCorpo").innerHTML = `<div class="carregando"><div class="giro"></div><div>Buscando mais de 80 anos de clima…<br><small>Na primeira vez pode levar alguns segundos.</small></div></div>`;
+  let H;
+  try { H = await buscarHistorico(); }
+  catch (e) {
+    if (estado.selecionado === linha && estado.aba === "hist")
+      $("pCorpo").innerHTML = `<div class="erro">Não consegui buscar o histórico agora (o servidor pode estar ocupado). Tente de novo em alguns minutos.</div>`;
+    return;
+  }
+  if (estado.selecionado !== linha || estado.aba !== "hist") return;
+  estado.hist = H;
+  if (!estado.anoComp || !H.anos[estado.anoComp]) estado.anoComp = H.anoAtual;
+
+  const pct = (v, n) => n > 0 ? Math.round((v / n) * 100) : 0;
+  const situacao = p => p < 60 ? ["bem abaixo da média", "seco"] : p < 85 ? ["abaixo da média", "seco"] : p <= 115 ? ["dentro da média", "ok"] : p <= 150 ? ["acima da média", "umido"] : ["bem acima da média", "umido"];
+  const p30 = pct(H.j30.chuva, H.j30.chuvaNormal), p90 = pct(H.j90.chuva, H.j90.chuvaNormal);
+  const s30 = situacao(p30), s90 = situacao(p90);
+  const dT30 = H.j30.t - H.j30.tNormal;
+  const fData = s => `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)}`;
+  const anosSel = Object.keys(H.anos).map(Number).sort((a, b) => b - a).map(a => `<option value="${a}" ${a === estado.anoComp ? "selected" : ""}>${a}${a === H.anoAtual ? " (até agora)" : ""}</option>`).join("");
+
+  $("pCorpo").innerHTML = `
+    <p class="resumo">Dados de <b>${H.primeiroAno}</b> até <b>${fData(H.ultimoDia)}</b>. "Média" = normal climatológica <b>${NORMAL_INI}–${NORMAL_FIM}</b> deste ponto.</p>
+
+    <div class="secao primeira">
+      <h3>Como está a chuva</h3>
+      <div class="grade">
+        <div class="item kpi ${s30[1]}"><div class="r">🌧️ Últimos 30 dias</div><div class="v">${fmt(H.j30.chuva)}<small> mm</small></div>
+          <div class="k-sub">${p30}% da média (${fmt(H.j30.chuvaNormal)} mm) · <b>${s30[0]}</b></div></div>
+        <div class="item kpi ${s90[1]}"><div class="r">🌧️ Últimos 90 dias</div><div class="v">${fmt(H.j90.chuva)}<small> mm</small></div>
+          <div class="k-sub">${p90}% da média (${fmt(H.j90.chuvaNormal)} mm) · <b>${s90[0]}</b></div></div>
+        <div class="item kpi"><div class="r">🌡️ Temperatura, 30 dias</div><div class="v">${fmt(H.j30.t, 1)}<small> °C</small></div>
+          <div class="k-sub">${dT30 >= 0 ? "+" : "−"}${fmt(Math.abs(dT30), 1)} °C ${Math.abs(dT30) < .5 ? "· perto da média" : dT30 > 0 ? "· mais quente que a média" : "· mais frio que a média"}</div></div>
+        <div class="item kpi ${H.seqAtual >= 15 ? "seco" : ""}"><div class="r">☀️ Dias seguidos sem chuva</div><div class="v">${H.seqAtual}<small> ${H.seqAtual === 1 ? "dia" : "dias"}</small></div>
+          <div class="k-sub">${H.seqAtual ? `desde ${fData(H.iniSeqAtual)}` : "choveu no último dia com dado"} · recorde ${H.rec.seca[0]} dias</div></div>
+      </div>
+    </div>
+
+    <div class="secao">
+      <h3>Chuva por mês: ano escolhido × média</h3>
+      <label class="sel-ano">Ano: <select id="selAno">${anosSel}</select></label>
+      <div class="graf" id="gMesChuva"></div>
+      <p class="resumo" id="txtAno"></p>
+    </div>
+
+    <div class="secao">
+      <h3>Temperatura média por mês</h3>
+      <div class="graf" id="gMesTemp"></div>
+    </div>
+
+    <div class="secao">
+      <h3>Listras do clima <span class="h3-extra">cada faixa é um ano</span></h3>
+      <div class="listras" id="listras"></div>
+      <div class="listras-leg"><span>${H.anual[0].ano}</span><span class="esc"><i style="background:#2a78c8"></i>mais frio · <i style="background:#efefef"></i>média · <i style="background:#d1453b"></i>mais quente</span><span>${H.anual[H.anual.length - 1].ano}</span></div>
+      <p class="resumo">A temperatura média aqui ${H.tendencia >= 0 ? "subiu" : "caiu"} cerca de <b>${fmt(Math.abs(H.tendencia), 2)} °C por década</b> desde ${H.anual[0].ano}. Ano mais quente: <b>${H.anoMaisQuente.ano}</b> (${fmt(H.anoMaisQuente.t, 1)} °C de média).</p>
+    </div>
+
+    <div class="secao">
+      <h3>Temperatura média de cada ano</h3>
+      <div class="graf" id="gAnoTemp"></div>
+    </div>
+
+    <div class="secao">
+      <h3>Chuva de cada ano <span class="h3-extra">média ${fmt(H.normalAnoChuva)} mm/ano</span></h3>
+      <div class="graf" id="gAnoChuva"></div>
+    </div>
+
+    <div class="secao">
+      <h3>Recordes desde ${H.primeiroAno}</h3>
+      <div class="recordes">
+        <div><span>🔥 Dia mais quente</span><b>${fmt(H.rec.quente[0], 1)} °C</b><small>${fData(H.rec.quente[1])}</small></div>
+        <div><span>🥶 Dia mais frio</span><b>${fmt(H.rec.frio[0], 1)} °C</b><small>${fData(H.rec.frio[1])}</small></div>
+        <div><span>🌊 Mais chuva num dia</span><b>${fmt(H.rec.chuva[0])} mm</b><small>${fData(H.rec.chuva[1])}</small></div>
+        <div><span>☀️ Maior seca seguida</span><b>${H.rec.seca[0]} dias</b><small>${fData(H.rec.seca[1])} a ${fData(H.rec.seca[2])}</small></div>
+        <div><span>☔ Ano mais chuvoso</span><b>${fmt(H.anoMaisChuvoso.chuva)} mm</b><small>${H.anoMaisChuvoso.ano}</small></div>
+        <div><span>🏜️ Ano mais seco</span><b>${fmt(H.anoMaisSeco.chuva)} mm</b><small>${H.anoMaisSeco.ano}</small></div>
+        ${H.rec.rajada[0] ? `<div><span>🌪️ Rajada mais forte</span><b>${fmt(H.rec.rajada[0])} km/h</b><small>${fData(H.rec.rajada[1])}</small></div>` : ""}
+      </div>
+    </div>
+
+    <div class="secao">
+      <h3>Como é o clima aqui, mês a mês <span class="h3-extra">média ${NORMAL_INI}–${NORMAL_FIM}</span></h3>
+      <div class="tabela-wrap"><table class="tabela">
+        <thead><tr><th>Mês</th><th>Chuva</th><th>Dias de chuva</th><th>Máx.</th><th>Mín.</th></tr></thead>
+        <tbody>${H.normal.map((x, m) => `<tr><td>${MESES[m]}</td><td>${fmt(x.chuva)} mm</td><td>${fmt(x.diasChuva)}</td><td>${fmt(x.max, 1)}°</td><td>${fmt(x.min, 1)}°</td></tr>`).join("")}
+        <tr class="tot"><td>Ano</td><td>${fmt(H.normalAnoChuva)} mm</td><td>${fmt(H.normal.reduce((s, x) => s + x.diasChuva, 0))}</td><td colspan="2">média ${fmt(H.normalAnoT, 1)}°</td></tr></tbody>
+      </table></div>
+    </div>
+    <p class="nota">Histórico da reanálise ERA5 (Copernicus/ECMWF), via Open-Meteo: é um modelo que reconstrói o clima numa grade de cerca de 25 km, não a leitura de um pluviômetro na sua propriedade. Serve muito bem para comparar anos e ver tendências.</p>`;
+
+  desenharAnoEscolhido(H);
+  $("selAno").addEventListener("change", e => { estado.anoComp = +e.target.value; desenharAnoEscolhido(H); });
+
+  // listras do clima
+  const anomalias = H.anual.map(x => x.t - H.normalAnoT);
+  const lim = Math.max(...anomalias.map(Math.abs)) || 1;
+  const L = $("listras");
+  H.anual.forEach((x, i) => {
+    const s = document.createElement("i");
+    s.style.background = corDiverg(anomalias[i] / lim);
+    s.dataset.i = i; L.appendChild(s);
+  });
+  const dicaL = document.createElement("div"); dicaL.className = "g-dica"; L.appendChild(dicaL);
+  const moverL = ev => {
+    const r = L.getBoundingClientRect(), i = Math.max(0, Math.min(H.anual.length - 1, Math.floor((ev.clientX - r.left) / r.width * H.anual.length)));
+    const a = anomalias[i];
+    dicaL.replaceChildren();
+    const t1 = document.createElement("div"); t1.className = "g-dica-tit"; t1.textContent = String(H.anual[i].ano);
+    const t2 = document.createElement("div"); const b = document.createElement("b"); b.textContent = `${fmt(H.anual[i].t, 1)} °C`; t2.append(b, document.createTextNode(` (${a >= 0 ? "+" : "−"}${fmt(Math.abs(a), 1)} °C da média)`));
+    dicaL.append(t1, t2); dicaL.style.display = "block";
+    const px = ev.clientX - r.left; dicaL.style.left = Math.min(Math.max(0, px - dicaL.offsetWidth / 2), r.width - dicaL.offsetWidth) + "px";
+  };
+  L.addEventListener("pointermove", moverL); L.addEventListener("pointerdown", moverL);
+  L.addEventListener("pointerleave", () => dicaL.style.display = "none");
+
+  // anos
+  const anosRot = H.anual.map(x => String(x.ano));
+  const tAnos = H.anual.map(x => x.t);
+  const mxA = H.anual.reduce((s, x) => s + x.ano, 0) / H.anual.length, myA = tAnos.reduce((s, v) => s + v, 0) / tAnos.length;
+  grafLinha($("gAnoTemp"), {
+    rotulos: anosRot, unidade: "°C", casas: 1,
+    series: [
+      { nome: "Média do ano", cor: COR_MAX, valores: tAnos },
+      { nome: "Tendência", cor: "#6b7c8a", valores: H.anual.map(x => +(myA + (H.tendencia / 10) * (x.ano - mxA)).toFixed(2)), traco: "5 4", semRotulo: true }
+    ]
+  });
+  grafBarras($("gAnoChuva"), {
+    rotulos: anosRot, unidade: "mm", casas: 0, cor: COR_CHUVA, valores: H.anual.map(x => x.chuva), linhaRef: H.normalAnoChuva,
+    extra: i => `${Math.round(H.anual[i].chuva / H.normalAnoChuva * 100)}% da média`
+  });
+}
+
+function desenharAnoEscolhido(H) {
+  const a = estado.anoComp, A = H.anos[a];
+  const meses = A.m.map((M, m) => M.dias ? M.chuva : null);
+  const ate = meses.reduce((u, v, m) => v != null ? m : u, -1);
+  grafBarras2($("gMesChuva"), {
+    rotulos: MESES, unidade: "mm",
+    series: [{ nome: String(a), cor: COR_CHUVA, valores: meses }, { nome: `Média ${NORMAL_INI}–${NORMAL_FIM}`, cor: COR_MEDIA, valores: H.normal.map(x => x.chuva) }]
+  });
+  const tMes = A.m.map(M => M.tN ? +(M.tSoma / M.tN).toFixed(1) : null);
+  grafLinha($("gMesTemp"), {
+    rotulos: MESES, unidade: "°C", casas: 1,
+    series: [{ nome: String(a), cor: COR_MAX, valores: tMes }, { nome: `Média ${NORMAL_INI}–${NORMAL_FIM}`, cor: COR_MEDIA, valores: H.normal.map(x => +x.t.toFixed(1)), traco: "5 4", semRotulo: true }]
+  });
+  const total = meses.reduce((s, v) => s + (v || 0), 0);
+  const normalAte = H.normal.slice(0, ate + 1).reduce((s, x) => s + x.chuva, 0);
+  const p = normalAte ? Math.round(total / normalAte * 100) : 0;
+  const parcial = a === H.anoAtual;
+  $("txtAno").innerHTML = `${parcial ? `Em <b>${a}</b>, até ${MESES_LONGO[ate]}, choveu` : `Em <b>${a}</b> choveu`} <b>${fmt(total)} mm</b>, ` +
+    `<b>${p}%</b> do que costuma chover ${parcial ? "nesse período" : "num ano"} (${fmt(normalAte)} mm).` +
+    (parcial ? ` O mês atual ainda está incompleto.` : "");
+}
+
+/* Cor divergente: −1 azul · 0 cinza · +1 vermelho */
+function corDiverg(v) {
+  const mix = (c1, c2, k) => c1.map((x, i) => Math.round(x + (c2[i] - x) * k));
+  const az = [42, 120, 200], cz = [239, 239, 239], vm = [209, 69, 59];
+  const c = v < 0 ? mix(cz, az, Math.min(1, -v)) : mix(cz, vm, Math.min(1, v));
+  return `rgb(${c.join(",")})`;
+}
+
+/* Barras agrupadas (2 séries no mesmo eixo) */
+function grafBarras2(cont, { rotulos, unidade, series, casas = 0 }) {
+  const todos = series.flatMap(s => s.valores).filter(v => v != null);
+  const escl = escalaBonita(0, Math.max(...todos, 5));
+  const g = baseGrafico(cont, rotulos, escl, unidade);
+  const leg = document.createElement("div"); leg.className = "g-legenda";
+  series.forEach(s => { const it = document.createElement("span"); const k = document.createElement("i"); k.className = "caixa"; k.style.background = s.cor; it.append(k, document.createTextNode(s.nome)); leg.appendChild(it); });
+  cont.prepend(leg);
+  const grupo = g.pw / g.n, larg = Math.max(2, Math.min(14, (grupo - 6) / series.length - 2));
+  const barras = [];
+  series.forEach((s, k) => s.valores.forEach((v, i) => {
+    if (v == null || v <= 0) return;
+    const x0 = g.x(i) - (series.length * (larg + 2)) / 2 + k * (larg + 2) + 1, y0 = g.y(v), h = g.y(0) - y0, r = Math.min(3, larg / 2, h);
+    const b = el("path", { d: `M${x0},${g.y(0)} V${y0 + r} Q${x0},${y0} ${x0 + r},${y0} H${x0 + larg - r} Q${x0 + larg},${y0} ${x0 + larg},${y0 + r} V${g.y(0)} Z`, fill: s.cor, class: "g-barra" }, g.svg);
+    (barras[i] ??= []).push(b);
+  }));
+  let acesas = [];
+  interativo(g, cont, i => {
+    acesas.forEach(b => b.classList.remove("acesa")); acesas = barras[i] || []; acesas.forEach(b => b.classList.add("acesa"));
+    posDica(g, cont, g.x(i), [[rotulos[i]], ...series.map(s => [`${s.valores[i] == null ? "sem dado" : fmt(s.valores[i], casas) + " " + unidade}  ${s.nome}`, s.cor, true])]);
+  }, () => { acesas.forEach(b => b.classList.remove("acesa")); acesas = []; });
+}
+
 /* ---------- Fala (botão Ouvir) ---------- */
 function montarFala(linha, d) {
   const c = d.current, dd = d.daily, t = tempo(c.weather_code, c.is_day), dir = direcao(c.wind_direction_10m);
@@ -681,7 +1008,7 @@ function baseGrafico(cont, rotulos, { a, b, ticks }, unidade, sombraDepois) {
   if (sombraDepois != null && sombraDepois < n) el("rect", { x: m.l + sombraDepois * (pw / n), y: m.t, width: pw - sombraDepois * (pw / n), height: ph, class: "g-tend" }, svg);
   ticks.forEach(v => {
     el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v === 0 ? "g-base" : "g-grade" }, svg);
-    const t = el("text", { x: m.l - 6, y: y(v) + 4, class: "g-eixo", "text-anchor": "end" }, svg); t.textContent = fmt(v);
+    const t = el("text", { x: m.l - 6, y: y(v) + 4, class: "g-eixo", "text-anchor": "end" }, svg); t.textContent = fmt(v, (ticks[1] - ticks[0]) < 1 ? 1 : 0);
   });
   const largRot = Math.max(...rotulos.map(r => String(r).length)) * 6.2 + 10;
   const pulo = Math.max(1, Math.ceil(n / Math.floor(pw / largRot)));
@@ -719,35 +1046,42 @@ function grafLinha(cont, { rotulos, series, unidade, casas = 0, sombraDepois }) 
   const todos = series.flatMap(s => s.valores).filter(v => v != null);
   const esc = escalaBonita(Math.min(...todos), Math.max(...todos));
   const g = baseGrafico(cont, rotulos, esc, unidade, sombraDepois);
+  const suf = unidade === "°C" ? "°" : "";
   if (series.length > 1) {
     const leg = document.createElement("div"); leg.className = "g-legenda";
-    series.forEach(s => { const it = document.createElement("span"); const k = document.createElement("i"); k.style.background = s.cor; it.append(k, document.createTextNode(s.nome)); leg.appendChild(it); });
+    series.forEach(s => { const it = document.createElement("span"); const k = document.createElement("i"); k.style.background = s.traco ? `repeating-linear-gradient(90deg,${s.cor} 0 4px,transparent 4px 7px)` : s.cor; it.append(k, document.createTextNode(s.nome)); leg.appendChild(it); });
     cont.prepend(leg);
   }
   series.forEach(s => {
-    const pts = s.valores.map((v, i) => `${g.x(i)},${g.y(v)}`).join(" ");
-    el("polyline", { points: pts, fill: "none", stroke: s.cor, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, g.svg);
+    // quebra a linha onde não há dado
+    let trecho = [];
+    const fecha = () => { if (trecho.length > 1) el("polyline", { points: trecho.join(" "), fill: "none", stroke: s.cor, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round", ...(s.traco ? { "stroke-dasharray": s.traco } : {}) }, g.svg); trecho = []; };
+    s.valores.forEach((v, i) => { if (v == null) fecha(); else trecho.push(`${g.x(i)},${g.y(v)}`); });
+    fecha();
   });
-  // rótulos só nos extremos: maior da 1ª série e menor da última
+  // rótulos só nos extremos: maior da 1ª série e menor da última (sem rótulo em linhas de referência)
   const marca = (s, i, acima) => {
+    if (i < 0 || s.valores[i] == null) return;
     el("circle", { cx: g.x(i), cy: g.y(s.valores[i]), r: 4, fill: s.cor, stroke: "#fff", "stroke-width": 2 }, g.svg);
     const t = el("text", { x: g.x(i), y: g.y(s.valores[i]) + (acima ? -9 : 17), class: "g-rot", "text-anchor": "middle" }, g.svg);
-    t.textContent = fmt(s.valores[i], casas) + "°";
+    t.textContent = fmt(s.valores[i], casas) + suf;
   };
-  const s0 = series[0], sN = series[series.length - 1];
-  marca(s0, s0.valores.indexOf(Math.max(...s0.valores)), true);
-  if (series.length > 1) marca(sN, sN.valores.indexOf(Math.min(...sN.valores)), false);
+  const extremo = (s, f) => { const v = s.valores.filter(x => x != null); return s.valores.indexOf(f(...v)); };
+  const rotuladas = series.filter(s => !s.semRotulo);
+  if (rotuladas[0]) marca(rotuladas[0], extremo(rotuladas[0], Math.max), true);
+  if (rotuladas.length > 1) { const sN = rotuladas[rotuladas.length - 1]; marca(sN, extremo(sN, Math.min), false); }
+  else if (rotuladas[0] && series.length === 1) marca(rotuladas[0], extremo(rotuladas[0], Math.min), false);
   const mira = el("line", { y1: g.m.t, y2: g.m.t + g.ph, class: "g-mira", style: "display:none" }, g.svg);
   const pontos = series.map(s => el("circle", { r: 5, fill: s.cor, stroke: "#fff", "stroke-width": 2, style: "display:none;pointer-events:none" }, g.svg));
   interativo(g, cont, i => {
     mira.setAttribute("x1", g.x(i)); mira.setAttribute("x2", g.x(i)); mira.style.display = "";
-    pontos.forEach((p, k) => { p.setAttribute("cx", g.x(i)); p.setAttribute("cy", g.y(series[k].valores[i])); p.style.display = ""; });
-    posDica(g, cont, g.x(i), [[rotulos[i]], ...series.map(s => [`${fmt(s.valores[i], casas)} ${unidade}  ${s.nome}`, s.cor, true])]);
+    pontos.forEach((p, k) => { const v = series[k].valores[i]; if (v == null) { p.style.display = "none"; return; } p.setAttribute("cx", g.x(i)); p.setAttribute("cy", g.y(v)); p.style.display = ""; });
+    posDica(g, cont, g.x(i), [[rotulos[i]], ...series.map(s => [`${s.valores[i] == null ? "sem dado" : fmt(s.valores[i], casas) + " " + unidade}  ${s.nome}`, s.cor, true])]);
   }, () => { mira.style.display = "none"; pontos.forEach(p => p.style.display = "none"); });
 }
 
-function grafBarras(cont, { rotulos, valores, cor, unidade, casas = 0, max, extra, sombraDepois }) {
-  const esc = escalaBonita(0, Math.max(max ?? 0, ...valores, unidade === "mm" ? 5 : 1));
+function grafBarras(cont, { rotulos, valores, cor, unidade, casas = 0, max, extra, sombraDepois, linhaRef }) {
+  const esc = escalaBonita(0, Math.max(max ?? 0, linhaRef ?? 0, ...valores, unidade === "mm" ? 5 : 1));
   const g = baseGrafico(cont, rotulos, esc, unidade, sombraDepois);
   const larg = Math.max(2, Math.min(22, g.pw / g.n - 2));
   const barras = valores.map((v, i) => {
@@ -758,6 +1092,10 @@ function grafBarras(cont, { rotulos, valores, cor, unidade, casas = 0, max, extr
     // topo arredondado, base reta na linha do zero
     return el("path", { d: `M${x0},${g.y(0)} V${y0 + r} Q${x0},${y0} ${x0 + r},${y0} H${x0 + larg - r} Q${x0 + larg},${y0} ${x0 + larg},${y0 + r} V${g.y(0)} Z`, fill: cor, class: "g-barra" }, g.svg);
   });
+  if (linhaRef != null) {
+    el("line", { x1: g.m.l, x2: g.W - g.m.r, y1: g.y(linhaRef), y2: g.y(linhaRef), stroke: "#14212b", "stroke-width": 1.2, "stroke-dasharray": "5 4" }, g.svg);
+    const t = el("text", { x: g.W - g.m.r, y: g.y(linhaRef) - 5, class: "g-rot", "text-anchor": "end" }, g.svg); t.textContent = `média ${fmt(linhaRef)}`;
+  }
   // destaca o maior valor com rótulo
   const iMax = valores.indexOf(Math.max(...valores));
   if (valores[iMax] > 0) { const t = el("text", { x: g.x(iMax), y: g.y(valores[iMax]) - 6, class: "g-rot", "text-anchor": "middle" }, g.svg); t.textContent = fmt(valores[iMax], casas) + (unidade === "%" ? "%" : ""); }
