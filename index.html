@@ -263,6 +263,39 @@
   .criterios{margin-top:12px;font-size:13.5px;line-height:1.5}
   .criterios summary{cursor:pointer;font-weight:600;color:var(--azul-escuro)}
   .criterios ul{padding-left:18px;margin:8px 0 0}
+
+  /* ===== Etapa 6: plantio ===== */
+  .sub-abas{display:flex;gap:6px;margin-bottom:12px}
+  .sub-abas button{flex:1;border:1px solid var(--linha);background:var(--cartao);border-radius:12px;padding:9px 6px;font-size:13.5px;font-weight:600}
+  .sub-abas button.ativa{background:var(--azul);border-color:var(--azul);color:#fff}
+  .pl-filtros{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  .pl-filtros label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--texto-2)}
+  .pl-filtros select{font:inherit;font-size:15px;padding:9px 10px;border-radius:10px;border:1px solid var(--linha);background:var(--cartao);color:var(--texto)}
+  .pl-man{margin:0;font-size:13px;color:var(--texto-2)}
+  .seg{display:flex;border:1px solid var(--linha);border-radius:10px;overflow:hidden}
+  .seg button{flex:1;border:0;background:var(--cartao);padding:8px 4px;font-size:13px;font-weight:600;border-right:1px solid var(--linha)}
+  .seg button:last-child{border-right:0}
+  .seg button.ativa{background:var(--azul-claro);color:var(--azul-escuro)}
+  .seg button[disabled]{opacity:.35;cursor:not-allowed}
+  .cal-zarc{margin:4px 0 6px}
+  .cal-meses{display:grid;grid-template-columns:repeat(12,1fr);font-size:10.5px;color:var(--texto-2);text-align:center;margin-bottom:3px}
+  .cal-decs{display:grid;grid-template-columns:repeat(36,1fr);gap:1.5px}
+  .dec{display:block;height:26px;border-radius:2px;position:relative}
+  .dec.r2{background:#2f9e5b}.dec.r3{background:#e6c229}.dec.r4{background:#f18a3c}.dec.r0{background:#e3e8ed}
+  .dec:nth-child(3n+1){margin-left:1.5px}
+  .dec.hoje,.cal-horta i.hoje{outline:2.5px solid var(--texto);outline-offset:1px;z-index:1}
+  .leg-hoje{background:#fff!important;outline:2px solid var(--texto)}
+  .cal-horta{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+  .cal-horta i{display:block;height:22px;border-radius:4px;background:#e3e8ed}
+  .cal-horta i.on{background:#2f9e5b}
+  .horta-grade{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .horta-card{border:1px solid var(--linha);background:var(--cartao);border-radius:12px;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;border-bottom-width:4px}
+  .horta-card.bom{border-bottom-color:#2f9e5b}.horta-card.atencao{border-bottom-color:#e6c229}.horta-card.ruim{border-bottom-color:#dc3c3d}
+  .horta-card.sel{background:var(--azul-claro);border-color:var(--azul)}
+  .horta-card .hc-ic{font-size:26px}
+  .horta-card b{font-size:13.5px}
+  .horta-card small{font-size:11px;color:var(--texto-2)}
+  .horta-det{margin-top:12px}
   .rodape{position:fixed;left:12px;bottom:8px;z-index:998;font-size:11px;color:var(--texto-2);background:rgba(255,255,255,.85);padding:4px 8px;border-radius:8px;max-width:calc(100% - 200px)}
   .rodape a{color:var(--azul-escuro)}
   .leaflet-control-attribution{font-size:10px}
@@ -1187,10 +1220,8 @@ function desenharCampo(d) {
       </details>
       <p class="nota">⚠️ Orientação geral baseada na previsão do tempo. Sempre siga a <b>bula</b> do produto, use EPI e a <b>receita agronômica</b> (obrigatória para comprar e aplicar defensivos). Produtos diferentes têm exigências diferentes.</p>
     </div>
-    <div class="secao">
-      <h3>🌱 Plantio e colheita</h3>
-      <ul class="proximas"><li>📅 Janelas de plantio por cultura (ZARC) e guia de hortaliças chegam na próxima etapa</li></ul>
-    </div>`;
+    ${htmlSecPlantio()}`;
+  desenharPlantio();
   const det = $("detHora");
   $("pCorpo").querySelector(".semaforo").addEventListener("click", e => {
     const c = e.target.closest(".cel"); if (!c) return;
@@ -1203,6 +1234,215 @@ function desenharCampo(d) {
       ${a.motivos.length ? `<ul>${a.motivos.map(m => `<li>${m}</li>`).join("")}</ul>` : `<p>Condições boas para aplicar.</p>`}`;
   });
 }
+
+/* =========================================================
+   ETAPA 6 — Plantio e colheita
+   Lavoura: janelas oficiais do ZARC (Ministério da Agricultura)
+   Horta: guia geral por região + checagem com a previsão real
+   ========================================================= */
+const RISCO_TXT = { 2: "Risco 20%", 3: "Risco 30%", 4: "Risco 40%", 0: "Não indicado" };
+const RISCO_COR = { 2: "#2f9e5b", 3: "#e6c229", 4: "#f18a3c", 0: "#e3e8ed" };
+const SOLOS = ["Arenoso", "Médio", "Argiloso"];
+const cacheZarc = {};
+
+/* decêndios: 1 = 1–10/jan, 2 = 11–20/jan, 3 = 21–31/jan, … 36 = 21–31/dez */
+function decInicio(k) { const m = Math.floor(k / 3), p = k % 3; return [1 + p * 10, m]; }
+function decFim(k) { const m = Math.floor(k / 3), p = k % 3; return [p < 2 ? (p + 1) * 10 : new Date(2026, m + 1, 0).getDate(), m]; }
+const fDM = ([d, m]) => `${String(d).padStart(2, "0")}/${String(m + 1).padStart(2, "0")}`;
+function decHoje() { const h = new Date(); return h.getMonth() * 3 + Math.min(2, Math.floor((h.getDate() - 1) / 10)); }
+
+/* ciclo aproximado até a colheita (dias), para estimar quando colhe */
+const CICLOS = [
+  [/milho 2/i, 130], [/milho.*verde/i, 90], [/milho/i, 140], [/soja/i, 120], [/feij/i, 90], [/arroz/i, 120], [/trigo|triticale|cevada|aveia|centeio/i, 120],
+  [/sorgo/i, 110], [/girassol/i, 110], [/amendoim/i, 120], [/algod/i, 170], [/mamona/i, 150], [/gergelim/i, 100], [/canola/i, 120],
+  [/gr[aã]o de bico/i, 110], [/cebola/i, 150], [/melancia/i, 85], [/mel[aã]o/i, 80], [/tomate/i, 120], [/alho/i, 150], [/batata/i, 100], [/ervilha/i, 90]
+];
+const TEXTO_PERENE = [[/mandioca/i, "a mandioca é colhida de 8 a 18 meses depois do plantio"], [/cana/i, "a cana é colhida de 12 a 18 meses depois do plantio"],
+  [/caf[eé]/i, "o café é perene: a primeira colheita costuma vir cerca de 2 anos depois do plantio"]];
+
+async function carregarZarc(uf) {
+  if (!estado.culturasZarc) estado.culturasZarc = await carregarJSON("dados/zarc/culturas.json");
+  if (!cacheZarc[uf]) cacheZarc[uf] = await carregarJSON(`dados/zarc/zarc-${uf}.json`);
+  return cacheZarc[uf];
+}
+
+function htmlSecPlantio() {
+  return `<div class="secao" id="secPlantio">
+    <h3>🌱 Plantio e colheita</h3>
+    <div class="sub-abas"><button data-pl="lavoura" class="${estado.plModo !== "horta" ? "ativa" : ""}">🌾 Lavoura (ZARC oficial)</button><button data-pl="horta" class="${estado.plModo === "horta" ? "ativa" : ""}">🥬 Horta</button></div>
+    <div id="plCorpo"><div class="carregando"><div class="giro"></div>Carregando…</div></div>
+  </div>`;
+}
+
+async function desenharPlantio() {
+  const linha = estado.selecionado, alvo = $("plCorpo"); if (!alvo || !linha) return;
+  if (estado.plModo === "horta") return desenharHorta(linha);
+  let Z;
+  try { Z = await carregarZarc(linha[2]); }
+  catch (e) { alvo.innerHTML = `<div class="erro">As janelas do ZARC ainda estão sendo preparadas pelo robô. Volte em alguns minutos.</div>`; return; }
+  if (estado.selecionado !== linha || !$("plCorpo")) return;
+  const mun = Z[String(linha[0])];
+  const lista = estado.culturasZarc.culturas;
+  if (!mun) { alvo.innerHTML = `<p class="resumo">O ZARC não tem culturas zoneadas para ${esc(linha[1])}. Veja a aba 🥬 Horta.</p>`; return; }
+  const disponiveis = Object.keys(mun).map(Number).sort((a, b) => lista[a][1].localeCompare(lista[b][1], "pt"));
+  if (!disponiveis.includes(estado.plCultura)) estado.plCultura = disponiveis.find(i => /^soja$/i.test(lista[i][1])) ?? disponiveis.find(i => /milho 1/i.test(lista[i][1])) ?? disponiveis[0];
+  const grupos = { safra: "Grãos e lavouras de safra", "olerícola": "Hortaliças zoneadas", perene: "Perenes (café, frutas…)", "sem safra": "Outras" };
+  const opcoes = Object.entries(grupos).map(([t, nome]) => {
+    const itens = disponiveis.filter(i => lista[i][2] === t);
+    return itens.length ? `<optgroup label="${nome}">${itens.map(i => `<option value="${i}" ${i === estado.plCultura ? "selected" : ""}>${esc(lista[i][1])}</option>`).join("")}</optgroup>` : "";
+  }).join("");
+  const reg = mun[String(estado.plCultura)];
+  const manejos = Object.keys(reg);
+  if (!manejos.includes(estado.plManejo)) estado.plManejo = manejos.includes("S") ? "S" : manejos[0];
+  const solos = reg[estado.plManejo].split("|");
+  const solosOk = solos.map((s, i) => s ? i : -1).filter(i => i >= 0);
+  if (!solosOk.includes(estado.plSolo)) estado.plSolo = solosOk.includes(1) ? 1 : solosOk[0];
+  const decs = solos[estado.plSolo].split("").map(Number);
+  const hoje = decHoje();
+  const nomeCult = lista[estado.plCultura][1];
+
+  // veredito: dá para plantar agora? até quando? senão, quando é a próxima janela?
+  const fimJanela = k => { let f = k; for (let s = 1; s < 36; s++) { const j = (k + s) % 36; if (!decs[j]) break; f = j; } return f; };
+  let ver;
+  if (decs[hoje]) {
+    const f = fimJanela(hoje);
+    ver = { n: decs[hoje] === 2 ? "bom" : "atencao", ic: decs[hoje] === 2 ? "🟢" : "🟡", t: `Pode plantar agora (${RISCO_TXT[decs[hoje]].toLowerCase()})`, p: `A janela indicada vai até <b>${fDM(decFim(f))}</b>.`, ini: hoje };
+  } else {
+    let prox = -1; for (let s = 1; s <= 36; s++) { const j = (hoje + s) % 36; if (decs[j]) { prox = j; break; } }
+    ver = prox < 0 ? { n: "ruim", ic: "🔴", t: "Sem janela indicada", p: "Para este solo e manejo, o ZARC não indica época de plantio aqui." }
+      : { n: "ruim", ic: "🔴", t: "Fora da janela agora", p: `Próxima janela: <b>de ${fDM(decInicio(prox))} a ${fDM(decFim(fimJanela(prox)))}</b> (${RISCO_TXT[decs[prox]].toLowerCase()}).`, ini: prox };
+  }
+  // colheita estimada
+  let colheita = "";
+  const perene = TEXTO_PERENE.find(([r]) => r.test(nomeCult));
+  const ciclo = CICLOS.find(([r]) => r.test(nomeCult));
+  if (perene) colheita = `Colheita: ${perene[1]}.`;
+  else if (lista[estado.plCultura][2] === "perene") colheita = "Cultura perene: a janela mostra a melhor época para plantar as mudas; depois de formada, produz por vários anos.";
+  else if (ciclo && ver.ini != null) {
+    const [d, m] = decInicio(ver.ini), base = new Date();
+    const plantio = ver.ini === hoje ? base : new Date(base.getFullYear() + (m < base.getMonth() ? 1 : 0), m, d);
+    const colhe = new Date(plantio.getTime() + ciclo[1] * 864e5);
+    colheita = `Plantando ${ver.ini === hoje ? "agora" : `em ${fDM([d, m])}`}, a colheita deve vir por volta de <b>${MESES_LONGO[colhe.getMonth()]} de ${colhe.getFullYear()}</b> (ciclo médio de ~${ciclo[1]} dias; varia com a cultivar).`;
+  }
+  const celulas = decs.map((r, k) => `<i class="dec r${r} ${k === hoje ? "hoje" : ""}" title="${fDM(decInicio(k))} a ${fDM(decFim(k))}: ${RISCO_TXT[r]}"></i>`).join("");
+  alvo.innerHTML = `
+    <div class="pl-filtros">
+      <label>Cultura<select id="plCult">${opcoes}</select></label>
+      ${manejos.length > 1 ? `<div class="seg" data-grupo="manejo">${manejos.map(m => `<button data-man="${m}" class="${m === estado.plManejo ? "ativa" : ""}">${m === "S" ? "🌦️ Sequeiro" : "💧 Irrigado"}</button>`).join("")}</div>` : `<p class="pl-man">${manejos[0] === "S" ? "🌦️ Sequeiro (sem irrigação)" : "💧 Irrigado"}</p>`}
+      <div class="seg" data-grupo="solo">${SOLOS.map((s, i) => `<button data-solo="${i}" class="${i === estado.plSolo ? "ativa" : ""}" ${solos[i] ? "" : "disabled"}>${s}</button>`).join("")}</div>
+    </div>
+    <div class="veredito ${ver.n}"><div class="v-ic">${ver.ic}</div><div><b>${esc(nomeCult)}: ${ver.t}</b><p>${ver.p}</p>${colheita ? `<p>🧺 ${colheita}</p>` : ""}</div></div>
+    <div class="cal-zarc">
+      <div class="cal-meses">${MESES.map(m => `<span>${m}</span>`).join("")}</div>
+      <div class="cal-decs">${celulas}</div>
+    </div>
+    <div class="sem-leg"><span><i style="background:${RISCO_COR[2]}"></i>Risco 20%</span><span><i style="background:${RISCO_COR[3]}"></i>30%</span><span><i style="background:${RISCO_COR[4]}"></i>40%</span><span><i style="background:${RISCO_COR[0]}"></i>Não indicado</span><span><i class="leg-hoje"></i>Hoje</span></div>
+    <details class="criterios"><summary>O que é o ZARC e como ler</summary><ul>
+      <li>O <b>ZARC</b> (Zoneamento Agrícola de Risco Climático) é do Ministério da Agricultura e da Embrapa. Ele diz, para cada município, <b>em quais períodos de 10 dias</b> plantar tem menor risco de perder a lavoura por causa do clima.</li>
+      <li><b>Risco 20%</b> quer dizer que, em cerca de 2 a cada 10 anos, o clima pode causar perda. Quanto menor, melhor.</li>
+      <li>Plantar dentro da janela é exigência para <b>crédito rural, Proagro e seguro rural</b> com subvenção.</li>
+      <li>Aqui o Raio-X junta as cultivares: aparece o menor risco entre os ciclos (precoce, médio, tardio). Dentro de cada tipo de solo, fica o risco mais alto (estimativa conservadora). Para o detalhe por cultivar, consulte a portaria oficial ou o app <b>Zarc Plantio Certo</b>.</li>
+    </ul></details>
+    <p class="nota">Fonte: Tábua de risco do ZARC (MAPA), ${esc(estado.culturasZarc.safra)}${lista[estado.plCultura][2] !== "safra" ? " / perenes e olerícolas" : ""}. Atualizado em ${esc(estado.culturasZarc.atualizado)}.</p>`;
+}
+
+/* ---------- Horta: guia geral por região ---------- */
+const TODOS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const faixa = (a, b) => { const r = []; let m = a; while (true) { r.push(m); if (m === b) break; m = m % 12 + 1; } return r; };
+const HORTA = [
+  { nome: "Alface", ic: "🥬", meses: { Norte: faixa(4, 9), Nordeste: faixa(4, 9), "Centro-Oeste": faixa(3, 9), Sudeste: TODOS, Sul: [...faixa(2, 5), ...faixa(8, 11)] },
+    tMin: 10, tMax: 27, ciclo: [60, 80], dica: "No calor, use cultivar de verão (resistente a pendoar), sombrite 30–50% e rega leve todo dia. Gosta de clima ameno." },
+  { nome: "Couve", ic: "🥗", meses: { Norte: TODOS, Nordeste: TODOS, "Centro-Oeste": TODOS, Sudeste: TODOS, Sul: TODOS },
+    tMin: 5, tMax: 30, ciclo: [70, 90], dica: "Planta de ano todo. Depois que começa, colhe folhas por vários meses. Aduba com esterco curtido." },
+  { nome: "Tomate", ic: "🍅", meses: { Norte: faixa(4, 8), Nordeste: faixa(3, 8), "Centro-Oeste": faixa(2, 7), Sudeste: faixa(2, 8), Sul: faixa(8, 12) },
+    tMin: 12, tMax: 32, chuvaDemais: true, ciclo: [100, 120], dica: "Prefere tempo seco e ameno. Chuva demais traz doença nas folhas; calor acima de 32 °C derruba as flores. Tutore e evite molhar as folhas." },
+  { nome: "Pimentão", ic: "🫑", meses: { Norte: TODOS, Nordeste: TODOS, "Centro-Oeste": [...faixa(7, 12), 1, 2, 3], Sudeste: [...faixa(8, 12), 1, 2], Sul: faixa(9, 12) },
+    tMin: 15, tMax: 32, ciclo: [100, 120], dica: "Gosta de calor e não aguenta frio nem geada. Rega constante, sem encharcar." },
+  { nome: "Cenoura", ic: "🥕", meses: { Norte: faixa(4, 9), Nordeste: TODOS, "Centro-Oeste": TODOS, Sudeste: TODOS, Sul: TODOS },
+    tMin: 8, tMax: 30, ciclo: [90, 110], dica: "De outubro a março use cultivar de verão (tipo Brasília); de abril a setembro, de inverno (tipo Nantes). Solo fofo e sem pedras." },
+  { nome: "Beterraba", ic: "🟣", meses: { Norte: faixa(4, 8), Nordeste: faixa(4, 8), "Centro-Oeste": faixa(3, 8), Sudeste: faixa(3, 9), Sul: faixa(2, 11) },
+    tMin: 5, tMax: 27, ciclo: [60, 80], dica: "Prefere outono e inverno. No calor forte a raiz fica fibrosa e com anéis brancos." },
+  { nome: "Rúcula", ic: "🌿", meses: { Norte: faixa(4, 8), Nordeste: faixa(4, 8), "Centro-Oeste": faixa(3, 9), Sudeste: faixa(3, 10), Sul: faixa(2, 11) },
+    tMin: 5, tMax: 27, ciclo: [30, 45], dica: "Ciclo curto, boa para começar. No calor pendoa rápido: colha cedo e use sombrite." },
+  { nome: "Cheiro-verde", ic: "🌱", meses: { Norte: TODOS, Nordeste: TODOS, "Centro-Oeste": TODOS, Sudeste: TODOS, Sul: TODOS },
+    tMin: 5, tMax: 32, ciclo: [60, 80], dica: "Salsa e cebolinha vão bem o ano todo, até em vaso. A salsa demora a germinar: deixe a semente de molho na véspera." },
+  { nome: "Repolho", ic: "🥬", meses: { Norte: faixa(4, 8), Nordeste: faixa(4, 8), "Centro-Oeste": faixa(3, 8), Sudeste: faixa(2, 8), Sul: TODOS },
+    tMin: 5, tMax: 25, ciclo: [90, 110], dica: "Prefere frio. No verão use cultivar de verão. Cuidado com a lagarta: vistorie as folhas." },
+  { nome: "Abobrinha", ic: "🥒", meses: { Norte: TODOS, Nordeste: TODOS, "Centro-Oeste": [...faixa(8, 12), 1, 2, 3], Sudeste: [...faixa(8, 12), 1, 2], Sul: [...faixa(9, 12), 1] },
+    tMin: 15, tMax: 32, ciclo: [45, 60], dica: "Gosta de calor e não aguenta geada. Colha os frutos novos, com 15–20 cm." },
+  { nome: "Abóbora", ic: "🎃", meses: { Norte: TODOS, Nordeste: TODOS, "Centro-Oeste": [...faixa(8, 12), 1, 2, 3], Sudeste: [...faixa(8, 12), 1, 2], Sul: [...faixa(9, 12), 1] },
+    tMin: 15, tMax: 33, ciclo: [90, 120], dica: "Precisa de espaço para as ramas. Plante no começo das chuvas onde não há irrigação." },
+  { nome: "Quiabo", ic: "🌶️", meses: { Norte: TODOS, Nordeste: TODOS, "Centro-Oeste": [...faixa(9, 12), 1, 2, 3], Sudeste: [...faixa(9, 12), 1, 2], Sul: [...faixa(10, 12), 1] },
+    tMin: 18, tMax: 35, ciclo: [60, 75], dica: "Ama calor; com frio não cresce. Colha a cada 2 dias, com o fruto ainda macio." },
+  { nome: "Pepino", ic: "🥒", meses: { Norte: TODOS, Nordeste: TODOS, "Centro-Oeste": [...faixa(8, 12), 1, 2, 3], Sudeste: [...faixa(8, 12), 1, 2, 3], Sul: [...faixa(9, 12), 1, 2] },
+    tMin: 15, tMax: 32, ciclo: [45, 60], dica: "Gosta de calor e rega constante. Tutorar ajuda a ter fruto reto e limpo." },
+  { nome: "Milho verde", ic: "🌽", meses: { Norte: [...faixa(10, 12), 1, 2, 3], Nordeste: faixa(1, 5), "Centro-Oeste": [...faixa(9, 12), 1], Sudeste: [...faixa(9, 12), 1], Sul: faixa(8, 12) },
+    tMin: 15, tMax: 34, ciclo: [85, 100], dica: "Sem irrigação, plante no começo da época de chuvas da sua região." },
+  { nome: "Mandioca", ic: "🍠", meses: { Norte: [...faixa(10, 12), 1, 2, 3], Nordeste: faixa(1, 6), "Centro-Oeste": faixa(9, 12), Sudeste: faixa(9, 12), Sul: faixa(9, 11) },
+    tMin: 15, tMax: 35, cicloTxt: "de 8 a 18 meses", dica: "Plante as manivas (pedaços de rama de 15–20 cm) no começo das chuvas, com solo úmido." }
+];
+
+function climaProximo(d) {
+  const dd = d.daily, n = Math.min(14, dd.time.length);
+  const med = a => a.slice(0, n).reduce((s, v) => s + (v ?? 0), 0) / n;
+  return { tmax: med(dd.temperature_2m_max), tmin: med(dd.temperature_2m_min), chuva: dd.precipitation_sum.slice(0, n).reduce((s, v) => s + (v || 0), 0), dias: n };
+}
+
+function avaliarHorta(item, regiao, cli) {
+  const mes = new Date().getMonth() + 1;
+  const naEpoca = (item.meses[regiao] || []).includes(mes);
+  const alertas = [];
+  if (cli.tmax > item.tMax) alertas.push(`está quente para ${item.nome.toLowerCase()} (máximas perto de ${fmt(cli.tmax)} °C nas próximas 2 semanas)`);
+  if (cli.tmin < item.tMin) alertas.push(`as noites estão frias (mínimas perto de ${fmt(cli.tmin)} °C)`);
+  if (item.chuvaDemais && cli.chuva > 120) alertas.push(`muita chuva prevista (${fmt(cli.chuva)} mm em 2 semanas): risco de doenças, prefira estufa ou cobertura`);
+  const nivel = !naEpoca ? "ruim" : alertas.length ? "atencao" : "bom";
+  return { naEpoca, alertas, nivel };
+}
+
+function desenharHorta(linha) {
+  const d = estado.climaAtual, regiao = estado.estados[linha[2]]?.regiao || "Sudeste";
+  const cli = climaProximo(d);
+  const mes = new Date().getMonth();
+  const cards = HORTA.map((it, i) => {
+    const a = avaliarHorta(it, regiao, cli);
+    return `<button class="horta-card ${a.nivel} ${estado.plHorta === i ? "sel" : ""}" data-horta="${i}"><span class="hc-ic">${it.ic}</span><b>${it.nome}</b><small>${a.nivel === "bom" ? "🟢 Boa época" : a.nivel === "atencao" ? "🟡 Com cuidado" : "🔴 Fora de época"}</small></button>`;
+  }).join("");
+  let det = `<div class="det-hora">Toque numa hortaliça para ver detalhes, época e quando colhe.</div>`;
+  if (estado.plHorta != null) {
+    const it = HORTA[estado.plHorta], a = avaliarHorta(it, regiao, cli);
+    const hoje = new Date();
+    const colhe = it.ciclo ? `Plantando hoje, colhe por volta de <b>${fDM([new Date(hoje.getTime() + it.ciclo[0] * 864e5).getDate(), new Date(hoje.getTime() + it.ciclo[0] * 864e5).getMonth()])} a ${fDM([new Date(hoje.getTime() + it.ciclo[1] * 864e5).getDate(), new Date(hoje.getTime() + it.ciclo[1] * 864e5).getMonth()])}</b> (${it.ciclo[0]}–${it.ciclo[1]} dias).` : `Colheita ${it.cicloTxt} depois do plantio.`;
+    det = `<div class="horta-det">
+      <div class="veredito ${a.nivel}"><div class="v-ic">${it.ic}</div><div><b>${it.nome}: ${a.nivel === "bom" ? "boa época para plantar" : a.nivel === "atencao" ? "dá para plantar, com cuidados" : "fora da melhor época aqui"}</b>
+        <p>${a.naEpoca ? `${MESES_LONGO[mes][0].toUpperCase() + MESES_LONGO[mes].slice(1)} está dentro da época indicada para a região ${regiao}.` : `Na região ${regiao}, a melhor época é ${resumoMeses(it.meses[regiao])}.`}</p>
+        ${a.alertas.length ? `<p>⚠️ Atenção: ${a.alertas.join("; ")}.</p>` : ""}
+        <p>🧺 ${colhe}</p></div></div>
+      <div class="cal-zarc"><div class="cal-meses">${MESES.map(m => `<span>${m}</span>`).join("")}</div>
+        <div class="cal-horta">${MESES.map((_, m) => `<i class="${(it.meses[regiao] || []).includes(m + 1) ? "on" : ""} ${m === mes ? "hoje" : ""}"></i>`).join("")}</div></div>
+      <p class="resumo">💡 ${it.dica}</p>
+      <p class="resumo">🌡️ Faixa que ela aguenta bem: de ${it.tMin} °C (noite) a ${it.tMax} °C (dia).</p>
+    </div>`;
+  }
+  $("plCorpo").innerHTML = `
+    <p class="resumo">Para a região <b>${regiao}</b>, neste mês, com a previsão das próximas 2 semanas (máx. ~${fmt(cli.tmax)} °C, mín. ~${fmt(cli.tmin)} °C, ${fmt(cli.chuva)} mm de chuva).</p>
+    <div class="horta-grade">${cards}</div>
+    ${det}
+    <p class="nota">Guia geral por região, baseado em recomendações da Embrapa Hortaliças e calendários regionais. Em serras e lugares de altitude o clima é mais ameno e a época pode ser maior. Na dúvida, procure a Emater ou a assistência técnica do seu município.</p>`;
+}
+function resumoMeses(lst) {
+  if (!lst || !lst.length) return "não indicada";
+  if (lst.length === 12) return "o ano todo";
+  return `de ${MESES_LONGO[lst[0] - 1]} a ${MESES_LONGO[lst[lst.length - 1] - 1]}`;
+}
+
+/* cliques do plantio */
+$("pCorpo").addEventListener("click", e => {
+  const pl = e.target.closest("[data-pl]"); if (pl) { estado.plModo = pl.dataset.pl; document.querySelectorAll(".sub-abas button").forEach(b => b.classList.toggle("ativa", b === pl)); $("plCorpo").innerHTML = `<div class="carregando"><div class="giro"></div>Carregando…</div>`; return desenharPlantio(); }
+  const man = e.target.closest("[data-man]"); if (man) { estado.plManejo = man.dataset.man; return desenharPlantio(); }
+  const so = e.target.closest("[data-solo]"); if (so && !so.disabled) { estado.plSolo = +so.dataset.solo; return desenharPlantio(); }
+  const ho = e.target.closest("[data-horta]"); if (ho) { estado.plHorta = estado.plHorta === +ho.dataset.horta ? null : +ho.dataset.horta; desenharHorta(estado.selecionado); $("plCorpo").querySelector(".horta-det")?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+});
+$("pCorpo").addEventListener("change", e => { if (e.target.id === "plCult") { estado.plCultura = +e.target.value; desenharPlantio(); } });
 
 /* ---------- Fala (botão Ouvir) ---------- */
 function montarFala(linha, d) {
