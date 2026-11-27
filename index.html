@@ -99,8 +99,9 @@
 
   /* ===== Etapa 2: abas, dias, horas e gráficos ===== */
   .painel-cab{padding-bottom:0}
-  .abas{display:flex;gap:4px;margin:14px -18px 0;padding:0 14px;overflow-x:auto;scrollbar-width:none}
-  .abas button{border:0;background:none;padding:10px 12px 12px;font-size:14.5px;font-weight:600;color:var(--texto-2);border-bottom:3px solid transparent;white-space:nowrap}
+  .abas{display:grid;grid-template-columns:repeat(4,1fr);margin:14px -18px 0;padding:0 8px}
+  .abas button{border:0;background:none;padding:8px 2px 10px;font-size:13px;font-weight:600;color:var(--texto-2);border-bottom:3px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2}
+  .abas button .ic-aba{font-size:18px}
   .abas button.ativa{color:var(--azul-escuro);border-bottom-color:var(--azul)}
   .resumo{font-size:14.5px;line-height:1.55;margin:0 0 12px;color:var(--texto)}
   .mini-dias{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
@@ -256,10 +257,10 @@
       <button class="chip" id="btnLink">🔗 Compartilhar</button>
     </div>
     <nav class="abas" id="abas" aria-label="Seções">
-      <button data-aba="agora" class="ativa">☀️ Agora</button>
-      <button data-aba="dias">📅 16 dias</button>
-      <button data-aba="hora">🕐 Hora a hora</button>
-      <button data-aba="hist">📈 Histórico</button>
+      <button data-aba="agora" class="ativa"><span class="ic-aba">☀️</span>Agora</button>
+      <button data-aba="dias"><span class="ic-aba">📅</span>16 dias</button>
+      <button data-aba="hora"><span class="ic-aba">🕐</span>Hora a hora</button>
+      <button data-aba="hist"><span class="ic-aba">📈</span>Histórico</button>
     </nav>
   </div>
   <div class="painel-corpo" id="pCorpo"></div>
