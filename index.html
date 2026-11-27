@@ -303,7 +303,7 @@ function voltarBrasil() {
 function voarPara(limites) {
   const largo = window.innerWidth > 820;
   mapa.flyToBounds(limites, {
-    duration: .9,
+    duration: .9, maxZoom: 10,
     paddingTopLeft: [20, largo ? 90 : 150],
     paddingBottomRight: [largo && estado.selecionado ? 420 : 20, largo ? 20 : (estado.selecionado ? window.innerHeight * .5 : 90)]
   });
