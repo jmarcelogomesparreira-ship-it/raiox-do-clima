@@ -1,0 +1,46 @@
+name: Etapa 1 — baixar mapas do IBGE
+
+# Roda sozinho quando o script da etapa 1 muda, ou na mão pela aba Actions.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/etapa1_mapas.py"
+      - ".github/workflows/baixar-mapas.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: baixar-mapas
+  cancel-in-progress: false
+
+jobs:
+  mapas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar bibliotecas
+        run: pip install requests shapely
+
+      - name: Baixar malhas e lista de municípios
+        run: python src/etapa1_mapas.py
+
+      - name: Salvar no repositório
+        run: |
+          git config user.name "robo-do-clima"
+          git config user.email "actions@github.com"
+          git add dados/
+          if git diff --cached --quiet; then
+            echo "Nada mudou."
+          else
+            git commit -m "Mapas do IBGE atualizados"
+            git pull --rebase origin main
+            git push
+          fi

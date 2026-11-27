@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Raio-X do Clima — o clima de todo o Brasil</title>
+<meta name="description" content="Clima de qualquer município do Brasil: agora, previsão, histórico desde 1940, alertas e dicas para quem planta.">
+<meta name="theme-color" content="#0b6fa4">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌦️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --azul:#0b6fa4; --azul-escuro:#08486b; --azul-claro:#e3f2fb;
+    --verde:#2f9e5b; --sol:#f4b400; --perigo:#d94141;
+    --texto:#14212b; --texto-2:#4f6170; --linha:#dde5ec;
+    --fundo:#f3f6f9; --cartao:#ffffff;
+    --sombra:0 6px 24px rgba(13,40,60,.14);
+    --raio:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--texto);background:var(--fundo)}
+  button{font:inherit;cursor:pointer}
+  #mapa{position:fixed;inset:0;background:#cfe3ef}
+
+  /* ===== Barra do topo ===== */
+  .topo{position:fixed;top:12px;left:12px;right:12px;z-index:1000;display:flex;gap:10px;align-items:flex-start;pointer-events:none}
+  .marca{pointer-events:auto;display:flex;align-items:center;gap:10px;background:var(--cartao);border-radius:var(--raio);padding:10px 14px;box-shadow:var(--sombra);white-space:nowrap}
+  .marca .logo{font-size:26px;line-height:1}
+  .marca b{display:block;font-size:16px;font-weight:800;letter-spacing:-.3px}
+  .marca small{display:block;font-size:11.5px;color:var(--texto-2)}
+  .busca{pointer-events:auto;position:relative;flex:1;max-width:460px}
+  .busca input{width:100%;height:52px;border:0;border-radius:var(--raio);padding:0 16px 0 46px;font:inherit;font-size:16px;box-shadow:var(--sombra);outline:none;background:var(--cartao)}
+  .busca input:focus{box-shadow:var(--sombra),0 0 0 3px rgba(11,111,164,.35)}
+  .busca .lupa{position:absolute;left:15px;top:14px;font-size:20px;opacity:.6}
+  .sugestoes{position:absolute;top:58px;left:0;right:0;background:var(--cartao);border-radius:12px;box-shadow:var(--sombra);overflow:hidden;display:none}
+  .sugestoes.aberta{display:block}
+  .sugestoes button{display:flex;justify-content:space-between;width:100%;border:0;background:none;text-align:left;padding:12px 16px;font-size:15px;border-bottom:1px solid var(--linha)}
+  .sugestoes button:last-child{border-bottom:0}
+  .sugestoes button.ativa,.sugestoes button:hover{background:var(--azul-claro)}
+  .sugestoes span{color:var(--texto-2);font-size:13px;font-weight:600}
+  .sugestoes .vazio{padding:12px 16px;color:var(--texto-2);font-size:14px}
+
+  /* ===== Trilha (Brasil › MG › Cidade) ===== */
+  .trilha{position:fixed;left:12px;top:80px;z-index:999;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .trilha button{border:0;background:var(--cartao);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;box-shadow:0 2px 10px rgba(13,40,60,.12);color:var(--azul-escuro)}
+  .trilha button[disabled]{color:var(--texto);cursor:default}
+  .trilha i{font-style:normal;color:var(--texto-2);font-size:13px}
+
+  /* ===== Botões flutuantes ===== */
+  .acoes{position:fixed;right:12px;bottom:24px;z-index:999;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+  .btn-flut{border:0;background:var(--cartao);border-radius:14px;height:50px;min-width:50px;padding:0 16px;box-shadow:var(--sombra);font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;color:var(--texto)}
+  .btn-flut.principal{background:var(--azul);color:#fff;height:56px;font-size:16px}
+  .btn-flut.principal:hover{background:var(--azul-escuro)}
+  .camadas{display:flex;background:var(--cartao);border-radius:14px;box-shadow:var(--sombra);overflow:hidden}
+  .camadas button{border:0;background:none;padding:10px 12px;font-size:13px;font-weight:600;color:var(--texto-2)}
+  .camadas button.ativa{background:var(--azul-claro);color:var(--azul-escuro)}
+
+  /* ===== Painel do município ===== */
+  .painel{position:fixed;z-index:1001;background:var(--cartao);box-shadow:var(--sombra);display:flex;flex-direction:column;transition:transform .3s ease}
+  .painel.fechado{pointer-events:none}
+  .painel-cab{padding:18px 18px 12px;border-bottom:1px solid var(--linha);position:relative}
+  .alca{display:none}
+  .painel h2{margin:0;font-size:22px;letter-spacing:-.4px;padding-right:40px}
+  .painel .sub{color:var(--texto-2);font-size:13.5px;margin-top:3px}
+  .fechar{position:absolute;right:12px;top:14px;border:0;background:var(--fundo);width:36px;height:36px;border-radius:50%;font-size:18px}
+  .botoes-cab{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .chip{border:1px solid var(--linha);background:var(--cartao);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600;display:flex;gap:6px;align-items:center}
+  .chip:hover{background:var(--fundo)}
+  .painel-corpo{overflow-y:auto;padding:16px 18px 24px;flex:1}
+
+  .agora{background:linear-gradient(135deg,#0b6fa4,#1c9ad6);color:#fff;border-radius:var(--raio);padding:18px;position:relative;overflow:hidden}
+  .agora.noite{background:linear-gradient(135deg,#1d2b4f,#3a4f86)}
+  .agora .rot{font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:.85;font-weight:600}
+  .agora .linha1{display:flex;align-items:center;gap:14px;margin-top:6px}
+  .agora .temp{font-size:56px;font-weight:800;letter-spacing:-2px;line-height:1}
+  .agora .icone{font-size:52px;line-height:1}
+  .agora .desc{font-size:17px;font-weight:600;margin-top:8px}
+  .agora .maxmin{font-size:14px;opacity:.9;margin-top:2px}
+  .grade{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+  .item{background:var(--fundo);border-radius:12px;padding:12px}
+  .item .r{font-size:12px;color:var(--texto-2);font-weight:600;display:flex;gap:6px;align-items:center}
+  .item .v{font-size:20px;font-weight:700;margin-top:4px}
+  .item .v small{font-size:13px;font-weight:600;color:var(--texto-2)}
+  .bussola{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--azul);color:#fff;font-size:12px;font-weight:800;transition:transform .4s}
+  .secao{margin-top:20px}
+  .secao h3{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--texto-2);margin:0 0 10px}
+  .info{font-size:14px;color:var(--texto-2);line-height:1.7}
+  .info b{color:var(--texto)}
+  .proximas{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+  .proximas li{display:flex;gap:10px;align-items:center;font-size:14px;padding:10px 12px;border:1px dashed var(--linha);border-radius:12px;color:var(--texto-2)}
+  .carregando{display:flex;gap:10px;align-items:center;color:var(--texto-2);padding:20px 0}
+  .giro{width:22px;height:22px;border:3px solid var(--linha);border-top-color:var(--azul);border-radius:50%;animation:gira .8s linear infinite}
+  @keyframes gira{to{transform:rotate(360deg)}}
+  .erro{background:#fdecec;color:#8a1f1f;border-radius:12px;padding:12px;font-size:14px}
+
+  .rodape{position:fixed;left:12px;bottom:8px;z-index:998;font-size:11px;color:var(--texto-2);background:rgba(255,255,255,.85);padding:4px 8px;border-radius:8px;max-width:calc(100% - 200px)}
+  .rodape a{color:var(--azul-escuro)}
+  .leaflet-control-attribution{font-size:10px}
+  .leaflet-tooltip.nome-mun{font-family:Inter,sans-serif;font-weight:600;font-size:13px;border-radius:8px;padding:4px 8px}
+  .aviso{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1002;background:var(--cartao);padding:18px 22px;border-radius:var(--raio);box-shadow:var(--sombra);font-size:15px;max-width:340px;text-align:center;display:none}
+  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:1003;background:#14212b;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none}
+  .toast.on{opacity:1}
+
+  /* Computador: painel na direita */
+  @media (min-width:821px){
+    .painel{top:12px;right:12px;bottom:12px;width:390px;border-radius:20px}
+    .painel.fechado{transform:translateX(calc(100% + 30px))}
+    body.com-painel .acoes{right:414px}
+  }
+  /* Celular: painel sobe de baixo */
+  @media (max-width:820px){
+    .marca small{display:none}
+    .marca{padding:10px 12px}
+    .marca b{font-size:14px}
+    .topo{flex-wrap:wrap}
+    .busca{flex-basis:100%;max-width:none;order:2}
+    .trilha{top:136px}
+    .painel{left:0;right:0;bottom:0;max-height:72vh;border-radius:22px 22px 0 0;padding-bottom:env(safe-area-inset-bottom)}
+    .painel.fechado{transform:translateY(105%)}
+    .alca{display:block;width:44px;height:5px;border-radius:5px;background:var(--linha);margin:-6px auto 10px}
+    .acoes{bottom:20px}
+    body.com-painel .acoes{display:none}
+    .rodape{max-width:calc(100% - 24px);bottom:auto;top:auto;bottom:6px;font-size:10px}
+    .camadas button{padding:9px 10px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+
+<div id="mapa" role="application" aria-label="Mapa do Brasil"></div>
+
+<header class="topo">
+  <div class="marca">
+    <span class="logo">🌦️</span>
+    <div><b>Raio-X do Clima</b><small>O clima de todo o Brasil</small></div>
+  </div>
+  <div class="busca">
+    <span class="lupa">🔎</span>
+    <input id="busca" type="search" placeholder="Digite sua cidade… ex.: Iturama" autocomplete="off" aria-label="Buscar município">
+    <div class="sugestoes" id="sugestoes" role="listbox"></div>
+  </div>
+</header>
+
+<nav class="trilha" id="trilha"></nav>
+
+<div class="acoes">
+  <div class="camadas" id="camadas" aria-label="Tipo de mapa">
+    <button data-base="mapa" class="ativa">🗺️ Mapa</button>
+    <button data-base="satelite">🛰️ Satélite</button>
+    <button data-base="relevo">⛰️ Relevo</button>
+  </div>
+  <button class="btn-flut" id="btnBrasil" title="Ver o Brasil inteiro">🇧🇷 Brasil</button>
+  <button class="btn-flut principal" id="btnLocal">📍 Usar minha localização</button>
+</div>
+
+<aside class="painel fechado" id="painel" aria-live="polite">
+  <div class="painel-cab">
+    <div class="alca"></div>
+    <h2 id="pNome">—</h2>
+    <div class="sub" id="pSub"></div>
+    <button class="fechar" id="pFechar" aria-label="Fechar">✕</button>
+    <div class="botoes-cab">
+      <button class="chip" id="btnOuvir">🔊 Ouvir</button>
+      <button class="chip" id="btnLink">🔗 Compartilhar</button>
+    </div>
+  </div>
+  <div class="painel-corpo" id="pCorpo"></div>
+</aside>
+
+<div class="rodape">
+  Dados: <a href="https://www.ibge.gov.br" target="_blank" rel="noopener">IBGE</a> ·
+  <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) ·
+  Feito por <a href="https://github.com/jmarcelogomesparreira-ship-it" target="_blank" rel="noopener">Marcelo Parreira</a>
+</div>
+<div class="aviso" id="aviso"></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+/* =========================================================
+   Raio-X do Clima — Etapa 1
+   Mapa do Brasil · zoom por estado e município · busca ·
+   "minha localização" · clima de agora (prévia da Etapa 2)
+   ========================================================= */
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const semAcento = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
+const estado = {
+  municipios: [],          // [id, nome, uf, lat, lon]
+  porId: new Map(),
+  estados: {},             // sigla -> {nome, regiao, id}
+  ufAberta: null,
+  camadaMun: null,
+  cacheMun: {},            // sigla -> geojson
+  selecionado: null,       // linha do município
+  climaAtual: null
+};
+
+/* ---------- Mapa base ---------- */
+const mapa = L.map("mapa", {
+  zoomControl: false, preferCanvas: true, minZoom: 3, maxZoom: 15,
+  maxBounds: [[-40, -90], [10, -25]], maxBoundsViscosity: .8
+}).setView([-14.5, -52], 4);
+L.control.zoom({ position: "bottomleft" }).addTo(mapa);
+
+const bases = {
+  mapa: L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    { attribution: "© OpenStreetMap · © CARTO", subdomains: "abcd", maxZoom: 19 }),
+  satelite: L.layerGroup([
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      { attribution: "Imagens © Esri, Maxar, Earthstar Geographics", maxZoom: 19 }),
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
+      { subdomains: "abcd", maxZoom: 19 })
+  ]),
+  relevo: L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    { attribution: "© OpenTopoMap (CC-BY-SA) · © OpenStreetMap", subdomains: "abc", maxZoom: 17 })
+};
+let baseAtual = bases.mapa.addTo(mapa);
+$("camadas").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  mapa.removeLayer(baseAtual);
+  baseAtual = bases[b.dataset.base].addTo(mapa);
+  baseAtual.bringToBack?.();
+  document.querySelectorAll("#camadas button").forEach(x => x.classList.toggle("ativa", x === b));
+  restilizar();
+});
+
+/* Cores suaves por região */
+const corRegiao = { "Norte":"#2f9e5b", "Nordeste":"#e08a1e", "Centro-Oeste":"#c9a227", "Sudeste":"#0b6fa4", "Sul":"#6b5bd2" };
+const naSatelite = () => baseAtual === bases.satelite;
+
+/* ---------- Camada dos estados ---------- */
+let camadaUF = null;
+function estiloUF(f) {
+  const aberta = estado.ufAberta === f.properties.uf;
+  return {
+    color: naSatelite() ? "#ffffff" : "#ffffff", weight: aberta ? 2.5 : 1.4,
+    fillColor: corRegiao[f.properties.regiao] || "#0b6fa4",
+    fillOpacity: aberta ? 0 : (naSatelite() ? .12 : .28)
+  };
+}
+function restilizar() {
+  camadaUF?.setStyle(estiloUF);
+  estado.camadaMun?.setStyle(estiloMun);
+}
+
+/* ---------- Camada dos municípios ---------- */
+function estiloMun(f) {
+  const sel = estado.selecionado && estado.selecionado[0] === f.properties.id;
+  return {
+    color: sel ? "#d94141" : (naSatelite() ? "rgba(255,255,255,.8)" : "#0b6fa4"),
+    weight: sel ? 3 : .7,
+    fillColor: sel ? "#d94141" : "#0b6fa4",
+    fillOpacity: sel ? .18 : (naSatelite() ? .04 : .06)
+  };
+}
+
+async function carregarJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${r.status} em ${url}`);
+  return r.json();
+}
+
+async function abrirUF(sigla, { voar = true } = {}) {
+  if (estado.ufAberta === sigla && estado.camadaMun) { if (voar) voarPara(estado.camadaMun.getBounds()); return; }
+  estado.ufAberta = sigla;
+  if (estado.camadaMun) { mapa.removeLayer(estado.camadaMun); estado.camadaMun = null; }
+  restilizar();
+  atualizarTrilha();
+  toast(`Carregando municípios de ${estado.estados[sigla]?.nome || sigla}…`);
+  try {
+    if (!estado.cacheMun[sigla]) estado.cacheMun[sigla] = await carregarJSON(`dados/mapas/municipios-${sigla}.json`);
+  } catch (e) { avisar("Não consegui carregar os municípios deste estado. Tente de novo em instantes."); return; }
+  if (estado.ufAberta !== sigla) return; // a pessoa já mudou de estado
+  estado.camadaMun = L.geoJSON(estado.cacheMun[sigla], {
+    style: estiloMun,
+    onEachFeature: (f, camada) => {
+      camada.bindTooltip(esc(f.properties.nome), { sticky: true, className: "nome-mun", direction: "top" });
+      camada.on({
+        mouseover: e => { if (!(estado.selecionado && estado.selecionado[0] === f.properties.id)) e.target.setStyle({ fillOpacity: .25, weight: 1.5 }); },
+        mouseout: e => estado.camadaMun?.resetStyle(e.target),
+        click: () => selecionar(estado.porId.get(f.properties.id), { voar: false })
+      });
+    }
+  }).addTo(mapa);
+  if (voar) voarPara(estado.camadaMun.getBounds());
+}
+
+function voltarBrasil() {
+  if (estado.camadaMun) { mapa.removeLayer(estado.camadaMun); estado.camadaMun = null; }
+  estado.ufAberta = null; estado.selecionado = null;
+  fecharPainel(); restilizar(); atualizarTrilha(); marcador && mapa.removeLayer(marcador);
+  history.replaceState(null, "", location.pathname);
+  mapa.flyToBounds(camadaUF.getBounds(), { duration: .8, padding: [20, 20] });
+}
+
+function voarPara(limites) {
+  const largo = window.innerWidth > 820;
+  mapa.flyToBounds(limites, {
+    duration: .9,
+    paddingTopLeft: [20, largo ? 90 : 150],
+    paddingBottomRight: [largo && estado.selecionado ? 420 : 20, largo ? 20 : (estado.selecionado ? window.innerHeight * .5 : 90)]
+  });
+}
+
+/* ---------- Trilha ---------- */
+function atualizarTrilha() {
+  const t = $("trilha"); const partes = [];
+  partes.push(`<button data-ir="br" ${!estado.ufAberta ? "disabled" : ""}>🇧🇷 Brasil</button>`);
+  if (estado.ufAberta) partes.push(`<i>›</i><button data-ir="uf" ${!estado.selecionado ? "disabled" : ""}>${esc(estado.estados[estado.ufAberta]?.nome || estado.ufAberta)}</button>`);
+  if (estado.selecionado) partes.push(`<i>›</i><button disabled>${esc(estado.selecionado[1])}</button>`);
+  t.innerHTML = estado.ufAberta ? partes.join("") : "";
+}
+$("trilha").addEventListener("click", e => {
+  const b = e.target.closest("button[data-ir]"); if (!b || b.disabled) return;
+  if (b.dataset.ir === "br") voltarBrasil();
+  else { estado.selecionado = null; fecharPainel(); restilizar(); atualizarTrilha(); voarPara(estado.camadaMun.getBounds()); }
+});
+
+/* ---------- Selecionar município ---------- */
+let marcador = null;
+async function selecionar(linha, { voar = true, ponto = null } = {}) {
+  if (!linha) return;
+  const [id, nome, uf, lat, lon] = linha;
+  estado.selecionado = linha;
+  history.replaceState(null, "", `#m=${id}`);
+  abrirPainel(linha);
+  await abrirUF(uf, { voar: false });
+  restilizar(); atualizarTrilha();
+  if (marcador) mapa.removeLayer(marcador);
+  if (ponto) marcador = L.circleMarker(ponto, { radius: 9, color: "#fff", weight: 3, fillColor: "#d94141", fillOpacity: 1 }).addTo(mapa);
+  if (voar) {
+    let alvo = null;
+    estado.camadaMun?.eachLayer(c => { if (c.feature.properties.id === id) alvo = c; });
+    voarPara(alvo ? alvo.getBounds() : L.latLng(lat, lon).toBounds(30000));
+  }
+  buscarClimaAgora(linha, ponto);
+}
+
+/* ---------- Painel ---------- */
+function abrirPainel(linha) {
+  const [, nome, uf] = linha; const e = estado.estados[uf] || {};
+  $("pNome").textContent = nome;
+  $("pSub").textContent = `${e.nome || uf} · Região ${e.regiao || ""}`;
+  $("pCorpo").innerHTML = `<div class="carregando"><div class="giro"></div>Buscando o clima de agora…</div>`;
+  $("painel").classList.remove("fechado");
+  document.body.classList.add("com-painel");
+}
+function fecharPainel() {
+  $("painel").classList.add("fechado");
+  document.body.classList.remove("com-painel");
+  window.speechSynthesis?.cancel();
+}
+$("pFechar").addEventListener("click", () => {
+  estado.selecionado = null; fecharPainel(); restilizar(); atualizarTrilha();
+  history.replaceState(null, "", location.pathname);
+});
+
+/* Códigos de tempo da OMM -> texto e ícone */
+const TEMPO = {
+  0:["Céu limpo","☀️","🌙"], 1:["Quase limpo","🌤️","🌙"], 2:["Parcialmente nublado","⛅","☁️"], 3:["Nublado","☁️","☁️"],
+  45:["Neblina","🌫️"], 48:["Neblina com geada","🌫️"],
+  51:["Garoa fraca","🌦️"], 53:["Garoa","🌦️"], 55:["Garoa forte","🌧️"], 56:["Garoa congelante","🌧️"], 57:["Garoa congelante forte","🌧️"],
+  61:["Chuva fraca","🌦️"], 63:["Chuva","🌧️"], 65:["Chuva forte","🌧️"], 66:["Chuva congelante","🌧️"], 67:["Chuva congelante forte","🌧️"],
+  71:["Neve fraca","🌨️"], 73:["Neve","🌨️"], 75:["Neve forte","❄️"], 77:["Granizo fino","🌨️"],
+  80:["Pancadas de chuva fracas","🌦️"], 81:["Pancadas de chuva","🌧️"], 82:["Pancadas de chuva fortes","⛈️"],
+  85:["Pancadas de neve","🌨️"], 86:["Pancadas de neve fortes","❄️"],
+  95:["Trovoada","⛈️"], 96:["Trovoada com granizo","⛈️"], 99:["Trovoada forte com granizo","⛈️"]
+};
+const tempo = (c, dia) => { const t = TEMPO[c] || ["—","🌡️"]; return { texto: t[0], icone: (!dia && t[2]) ? t[2] : t[1] }; };
+const DIRS = ["norte","nordeste","leste","sudeste","sul","sudoeste","oeste","noroeste"];
+const SIG = ["N","NE","L","SE","S","SO","O","NO"];
+const direcao = g => Math.round(((g % 360) / 45)) % 8;
+const fmt = (n, c = 0) => Number(n).toLocaleString("pt-BR", { maximumFractionDigits: c, minimumFractionDigits: c });
+
+async function buscarClimaAgora(linha, ponto) {
+  const [id, nome, uf, latM, lonM] = linha;
+  const lat = ponto ? ponto[0] : latM, lon = ponto ? ponto[1] : lonM;
+  const url = "https://api.open-meteo.com/v1/forecast?" + new URLSearchParams({
+    latitude: lat, longitude: lon, timezone: "auto", forecast_days: 1,
+    current: "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,cloud_cover",
+    daily: "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max,sunrise,sunset"
+  });
+  try {
+    const d = await carregarJSON(url);
+    if (estado.selecionado !== linha) return;
+    estado.climaAtual = d;
+    desenharAgora(linha, d, lat, lon);
+  } catch (e) {
+    if (estado.selecionado !== linha) return;
+    $("pCorpo").innerHTML = `<div class="erro">Não consegui buscar o clima agora. Verifique a internet e toque no município de novo.</div>`;
+  }
+}
+
+function desenharAgora(linha, d, lat, lon) {
+  const c = d.current, dd = d.daily;
+  const t = tempo(c.weather_code, c.is_day);
+  const dir = direcao(c.wind_direction_10m);
+  const hora = c.time.slice(11, 16);
+  const nascer = dd.sunrise[0].slice(11, 16), por = dd.sunset[0].slice(11, 16);
+  $("pCorpo").innerHTML = `
+    <div class="agora ${c.is_day ? "" : "noite"}">
+      <div class="rot">Agora · ${hora}</div>
+      <div class="linha1"><div class="temp">${fmt(c.temperature_2m)}°</div><div class="icone">${t.icone}</div></div>
+      <div class="desc">${t.texto}</div>
+      <div class="maxmin">Máx ${fmt(dd.temperature_2m_max[0])}° · Mín ${fmt(dd.temperature_2m_min[0])}° · Sensação ${fmt(c.apparent_temperature)}°</div>
+    </div>
+    <div class="grade">
+      <div class="item"><div class="r">💧 Umidade do ar</div><div class="v">${fmt(c.relative_humidity_2m)}<small>%</small></div></div>
+      <div class="item"><div class="r">🌧️ Chuva hoje</div><div class="v">${fmt(dd.precipitation_sum[0], 1)}<small> mm</small></div></div>
+      <div class="item"><div class="r"><span class="bussola" style="transform:rotate(${c.wind_direction_10m + 180}deg)">↑</span> Vento</div><div class="v">${fmt(c.wind_speed_10m)}<small> km/h ${SIG[dir]}</small></div></div>
+      <div class="item"><div class="r">💨 Rajada</div><div class="v">${fmt(c.wind_gusts_10m)}<small> km/h</small></div></div>
+      <div class="item"><div class="r">☔ Chance de chuva</div><div class="v">${dd.precipitation_probability_max[0] ?? "—"}<small>%</small></div></div>
+      <div class="item"><div class="r">🕶️ Índice UV máx.</div><div class="v">${fmt(dd.uv_index_max[0], 1)}</div></div>
+      <div class="item"><div class="r">🌅 Nascer do sol</div><div class="v">${nascer}</div></div>
+      <div class="item"><div class="r">🌇 Pôr do sol</div><div class="v">${por}</div></div>
+    </div>
+    <div class="secao">
+      <h3>Sobre o local</h3>
+      <div class="info">
+        <b>${esc(linha[1])} — ${esc(linha[2])}</b><br>
+        Coordenadas: ${fmt(lat, 4)}, ${fmt(lon, 4)}<br>
+        Altitude: <b>${fmt(d.elevation)} m</b><br>
+        Fuso horário: ${esc(d.timezone)}<br>
+        Código IBGE: ${linha[0]}
+      </div>
+    </div>
+    <div class="secao">
+      <h3>Chegando nas próximas etapas</h3>
+      <ul class="proximas">
+        <li>📅 Previsão de 16 dias, hora a hora</li>
+        <li>📈 Histórico desde 1940 e comparação com a média</li>
+        <li>⚠️ Alertas oficiais do INMET</li>
+        <li>🚜 Janela de pulverização e janelas de plantio</li>
+        <li>🌊 El Niño / La Niña</li>
+      </ul>
+    </div>`;
+  estado.textoFala = `${linha[1]}, ${estado.estados[linha[2]]?.nome || linha[2]}. Agora: ${fmt(c.temperature_2m)} graus, ${t.texto}. ` +
+    `Máxima de ${fmt(dd.temperature_2m_max[0])} e mínima de ${fmt(dd.temperature_2m_min[0])} graus. ` +
+    `Umidade do ar ${fmt(c.relative_humidity_2m)} por cento. Vento de ${fmt(c.wind_speed_10m)} quilômetros por hora, vindo do ${DIRS[dir]}. ` +
+    `Chance de chuva hoje: ${dd.precipitation_probability_max[0] ?? 0} por cento.`;
+}
+
+/* ---------- Ouvir e compartilhar ---------- */
+$("btnOuvir").addEventListener("click", () => {
+  if (!("speechSynthesis" in window)) return toast("Este aparelho não tem leitura em voz alta.");
+  if (speechSynthesis.speaking) { speechSynthesis.cancel(); return; }
+  if (!estado.textoFala) return toast("Espere o clima carregar.");
+  const f = new SpeechSynthesisUtterance(estado.textoFala);
+  f.lang = "pt-BR"; f.rate = .95;
+  const voz = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith("pt"));
+  if (voz) f.voice = voz;
+  speechSynthesis.speak(f);
+});
+$("btnLink").addEventListener("click", async () => {
+  const url = location.href;
+  const titulo = `Clima em ${estado.selecionado?.[1] || "Brasil"} — Raio-X do Clima`;
+  try {
+    if (navigator.share) await navigator.share({ title: titulo, url });
+    else { await navigator.clipboard.writeText(url); toast("Link copiado!"); }
+  } catch (_) {}
+});
+
+/* ---------- Busca ---------- */
+let ativa = -1, resultados = [];
+const inp = $("busca"), sug = $("sugestoes");
+inp.addEventListener("input", () => {
+  const q = semAcento(inp.value);
+  if (q.length < 2) { sug.classList.remove("aberta"); return; }
+  const comeca = [], contem = [];
+  for (const m of estado.municipios) {
+    const n = m.chave;
+    if (n.startsWith(q)) comeca.push(m); else if (n.includes(q)) contem.push(m);
+    if (comeca.length >= 8) break;
+  }
+  resultados = comeca.concat(contem).slice(0, 8);
+  ativa = resultados.length ? 0 : -1;
+  sug.innerHTML = resultados.length
+    ? resultados.map((m, i) => `<button role="option" data-i="${i}" class="${i === 0 ? "ativa" : ""}">${esc(m[1])}<span>${m[2]}</span></button>`).join("")
+    : `<div class="vazio">Nenhum município encontrado.</div>`;
+  sug.classList.add("aberta");
+});
+inp.addEventListener("keydown", e => {
+  if (!sug.classList.contains("aberta")) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    ativa = (ativa + (e.key === "ArrowDown" ? 1 : -1) + resultados.length) % resultados.length;
+    sug.querySelectorAll("button").forEach((b, i) => b.classList.toggle("ativa", i === ativa));
+  } else if (e.key === "Enter" && ativa >= 0) { escolher(resultados[ativa]); }
+  else if (e.key === "Escape") sug.classList.remove("aberta");
+});
+sug.addEventListener("click", e => { const b = e.target.closest("button"); if (b) escolher(resultados[+b.dataset.i]); });
+document.addEventListener("click", e => { if (!e.target.closest(".busca")) sug.classList.remove("aberta"); });
+function escolher(m) {
+  sug.classList.remove("aberta"); inp.value = ""; inp.blur();
+  selecionar(estado.porId.get(m[0]));
+}
+
+/* ---------- Minha localização ---------- */
+function maisProximo(lat, lon) {
+  let melhor = null, dist = Infinity;
+  const cosLat = Math.cos(lat * Math.PI / 180);
+  for (const m of estado.municipios) {
+    const dy = m[3] - lat, dx = (m[4] - lon) * cosLat, d = dx * dx + dy * dy;
+    if (d < dist) { dist = d; melhor = m; }
+  }
+  return melhor;
+}
+$("btnLocal").addEventListener("click", () => {
+  if (!navigator.geolocation) return avisar("Este aparelho não informa a localização. Digite sua cidade na busca.");
+  const b = $("btnLocal"); b.textContent = "📍 Procurando você…";
+  navigator.geolocation.getCurrentPosition(pos => {
+    b.textContent = "📍 Usar minha localização";
+    const { latitude: lat, longitude: lon } = pos.coords;
+    const m = maisProximo(lat, lon);
+    if (!m) return;
+    // Se a pessoa estiver dentro do Brasil, usa o ponto exato dela para o clima
+    const dentro = lat < 6 && lat > -34 && lon > -74 && lon < -34;
+    selecionar(estado.porId.get(m[0]), { ponto: dentro ? [lat, lon] : null });
+  }, err => {
+    b.textContent = "📍 Usar minha localização";
+    avisar(err.code === 1
+      ? "Para usar sua localização, permita o acesso quando o navegador perguntar. Ou digite sua cidade na busca lá em cima."
+      : "Não consegui achar sua localização agora. Digite sua cidade na busca lá em cima.");
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 300000 });
+});
+$("btnBrasil").addEventListener("click", voltarBrasil);
+
+/* ---------- Avisos ---------- */
+let tAviso, tToast;
+function avisar(msg) { const a = $("aviso"); a.textContent = msg; a.style.display = "block"; clearTimeout(tAviso); tAviso = setTimeout(() => a.style.display = "none", 5000); }
+$("aviso").addEventListener("click", () => $("aviso").style.display = "none");
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(tToast); tToast = setTimeout(() => t.classList.remove("on"), 1800); }
+
+/* ---------- Início ---------- */
+(async function iniciar() {
+  try {
+    const [br, lista] = await Promise.all([
+      carregarJSON("dados/mapas/brasil-estados.json"),
+      carregarJSON("dados/municipios.json")
+    ]);
+    lista.estados.forEach(e => estado.estados[e.uf] = e);
+    estado.municipios = lista.municipios;
+    for (const m of estado.municipios) { m.chave = semAcento(m[1]); estado.porId.set(m[0], m); }
+
+    camadaUF = L.geoJSON(br, {
+      style: estiloUF,
+      onEachFeature: (f, camada) => {
+        camada.bindTooltip(`${esc(f.properties.nome)}`, { sticky: true, className: "nome-mun", direction: "top" });
+        camada.on({
+          mouseover: e => { if (estado.ufAberta !== f.properties.uf) e.target.setStyle({ fillOpacity: .45, weight: 2.5 }); },
+          mouseout: e => camadaUF.resetStyle(e.target),
+          click: () => { if (estado.ufAberta !== f.properties.uf) { estado.selecionado = null; fecharPainel(); abrirUF(f.properties.uf); } }
+        });
+      }
+    }).addTo(mapa);
+    mapa.fitBounds(camadaUF.getBounds(), { padding: [20, 20] });
+
+    // Link compartilhado: #m=código do IBGE
+    const m = location.hash.match(/m=(\d{7})/);
+    if (m && estado.porId.has(+m[1])) selecionar(estado.porId.get(+m[1]));
+  } catch (e) {
+    console.error(e);
+    avisar("Os mapas ainda estão sendo preparados pelo robô. Volte em alguns minutos.");
+  }
+})();
+</script>
+</body>
+</html>
