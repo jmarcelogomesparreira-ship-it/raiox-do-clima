@@ -1,0 +1,16 @@
+{
+  "name": "Raio-X do Clima",
+  "short_name": "Raio-X Clima",
+  "description": "O clima de qualquer município do Brasil: agora, previsão, histórico, avisos e dicas para quem planta.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f6f9",
+  "theme_color": "#0b6fa4",
+  "icons": [
+    { "src": "docs/icones/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "docs/icones/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "docs/icones/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

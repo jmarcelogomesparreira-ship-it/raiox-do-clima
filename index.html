@@ -6,7 +6,18 @@
 <title>Raio-X do Clima — o clima de todo o Brasil</title>
 <meta name="description" content="Clima de qualquer município do Brasil: agora, previsão, histórico desde 1940, alertas e dicas para quem planta.">
 <meta name="theme-color" content="#0b6fa4">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌦️</text></svg>">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="docs/icones/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Raio-X Clima">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Raio-X do Clima — o clima de todo o Brasil">
+<meta property="og:description" content="Mapa interativo com previsão, histórico desde 1940, avisos do INMET, El Niño, janela de pulverização e janelas de plantio do ZARC para qualquer município.">
+<meta property="og:url" content="https://jmarcelogomesparreira-ship-it.github.io/raiox-do-clima/">
+<meta property="og:image" content="https://jmarcelogomesparreira-ship-it.github.io/raiox-do-clima/docs/previa.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="docs/icones/icone-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1989,7 +2000,13 @@ function desenharAvisosMapa() {
   }).addTo(mapa);
 }
 function avisosDoMunicipio(id) {
-  return (estado.avisos?.avisos || []).filter(a => a.geocodes.includes(id));
+  // o INMET às vezes publica dois avisos iguais (mesmo tipo, gravidade e período) para áreas vizinhas: mostra só um
+  const vistos = new Set();
+  return (estado.avisos?.avisos || []).filter(a => {
+    if (!a.geocodes.includes(id)) return false;
+    const k = `${a.evento}|${a.severidade}|${a.inicio}|${a.fim}`;
+    if (vistos.has(k)) return false; vistos.add(k); return true;
+  });
 }
 const fDataHora = s => s ? `${s.slice(8, 10)}/${s.slice(5, 7)} às ${s.slice(11, 16)}` : "";
 const ICONE_AVISO = ev => /chuva|tempest/i.test(ev) ? "⛈️" : /umidade/i.test(ev) ? "🏜️" : /vento|vendaval/i.test(ev) ? "🌪️" : /calor|quente/i.test(ev) ? "🔥" : /frio|geada/i.test(ev) ? "🥶" : "⚠️";
