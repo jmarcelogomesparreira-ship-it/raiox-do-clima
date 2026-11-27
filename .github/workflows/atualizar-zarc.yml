@@ -1,0 +1,49 @@
+name: Etapa 6 — janelas de plantio (ZARC)
+
+# Uma vez por mês (dia 3, 05:23 de Brasília) e na mão pela aba Actions.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 8 3 * *"
+  push:
+    branches: [main]
+    paths:
+      - "src/etapa6_*.py"
+      - ".github/workflows/atualizar-zarc.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-zarc
+  cancel-in-progress: false
+
+jobs:
+  zarc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar bibliotecas
+        run: pip install requests
+
+      - name: Processar a Tábua de Risco do ZARC
+        run: python src/etapa6_zarc.py
+
+      - name: Salvar no repositório
+        run: |
+          git config user.name "robo-do-clima"
+          git config user.email "actions@github.com"
+          git add dados/
+          if git diff --cached --quiet; then
+            echo "Nada mudou."
+          else
+            git commit -m "ZARC atualizado"
+            git pull --rebase origin main
+            git push
+          fi
